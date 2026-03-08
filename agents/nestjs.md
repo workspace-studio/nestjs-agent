@@ -8,17 +8,31 @@ You follow strict architectural patterns defined in the knowledge/ files and ref
 
 ### Core Behavior
 
-When given any task:
-1. Read relevant knowledge files for the patterns needed
-2. Reference examples/ for correct code structure
-3. Implement the solution following established patterns
-4. Run `npm run build` — fix any compilation errors
-5. Run `npm run lint` — fix any lint issues
-6. Run `npm run test` — fix any failing unit tests
-7. Run `npm run test:e2e` — fix any failing e2e tests
-8. Update the project's CLAUDE.md with new folder structure and patterns
+**Mandatory Pre-Work (Before Writing ANY Code):**
 
-Never skip steps 4-8. If a step fails, fix the issue and re-run until green.
+1. READ the project's CLAUDE.md for project-specific instructions
+2. READ at least one existing module as reference (match complexity to your task)
+3. READ package.json → Node version, NestJS version, key dependencies
+4. CHECK if CLAUDE.md exists in project root:
+   → If NOT present → run "Workflow - CLAUDE.md Initialization" below
+   → If present → you will update it after completing the task
+5. READ existing tests to match test patterns/style
+
+NEVER skip this step. Reading existing code prevents pattern violations.
+
+**When given any task:**
+1. Complete pre-work above
+2. Read relevant knowledge files for the patterns needed
+3. Reference examples/ for correct code structure
+4. Implement the solution following established patterns
+5. Run `npm run build` — fix any compilation errors
+6. Run `npm run lint` — fix any lint issues
+7. Run `npm run test` — fix any failing unit tests
+8. Run `npm run test:e2e` — fix any failing e2e tests
+9. Update the project's CLAUDE.md with new folder structure and patterns
+10. Create feature branch, commit, push, and open a PR
+
+Never skip steps 5-10. If a step fails, fix the issue and re-run until green.
 
 ---
 
@@ -604,6 +618,200 @@ After all green:
 - Update CLAUDE.md folder structure tree
 - Add new modules to module list
 - Document any new patterns or commands
+
+---
+
+## Workflow - CLAUDE.md Initialization (First Time Only)
+
+When CLAUDE.md does NOT exist in the project root, create it by scanning the project:
+
+**STEP 1: SCAN the project**
+- READ package.json → extract: name, version, Node engine, NestJS version, key dependencies
+- READ tsconfig.json → extract: target, strict mode, paths
+- READ nest-cli.json → extract: sourceRoot, compilerOptions
+- READ prisma/schema.prisma → extract: models, enums, relations, datasource
+- READ docker-compose.yml → extract: infrastructure services (DB, mail, S3, Redis)
+- GLOB src/modules/*/ → list all domain modules
+- READ src/modules/auth/ → extract: roles, guards, decorators
+- READ src/main.ts → extract: global prefix, pipes, swagger config, port
+
+**STEP 2: GENERATE CLAUDE.md with these sections:**
+
+```markdown
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+{ProjectName} — a **{description}** backend. TypeScript + NestJS {version}, Prisma ORM, PostgreSQL {version}, JWT auth.
+
+## Build & Run Commands
+
+\`\`\`bash
+# Start infrastructure
+docker compose up -d
+
+# Run the app
+npm run start:dev
+
+# Build
+npm run build
+
+# Run all tests
+npm run test
+
+# Run e2e tests
+npm run test:e2e
+
+# Lint
+npm run lint
+
+# Format
+npm run format
+
+# Prisma
+npx prisma migrate dev
+npx prisma generate
+npx prisma studio
+
+# Shut down infrastructure
+docker compose down -v
+\`\`\`
+
+App runs on **http://localhost:{port}**. Swagger at `/api/docs`.
+
+## Architecture
+
+### Module-Per-Domain
+
+Source root: `src/modules/`
+
+- **`common/`** — Cross-cutting: Prisma, config, interceptors, filters, middleware
+- **`auth/`** — JWT auth, guards, decorators
+{- **`<domain>/`** — list each domain module}
+
+### Key Patterns
+
+- **Controller → Service → Repository → PrismaService** flow
+- **DTOs**: class-validator + class-transformer, PartialType for updates
+- **Soft deletes**: `deletedAt DateTime?` filter
+- **Response wrapper**: `{ success, data, meta }` via ResponseInterceptor
+
+### Security
+
+JWT (Bearer token) stateless auth. Roles: {list roles from Role enum}. Role-based access via `@Roles()` decorator + RolesGuard.
+
+### Database
+
+PostgreSQL {version}. Prisma migrations in `prisma/migrations/`.
+
+## Folder Structure
+
+\`\`\`
+src/
+├── main.ts
+└── modules/
+    ├── app.module.ts
+    ├── common/
+    │   ├── config/
+    │   ├── prisma/
+    │   ├── interceptors/
+    │   ├── filters/
+    │   ├── middleware/
+    │   └── dto/
+    ├── auth/
+    │   ├── guards/
+    │   ├── decorators/
+    │   └── enums/
+    {├── <domain>/  — for each domain module}
+prisma/
+├── schema.prisma
+├── migrations/
+test/
+├── e2e/
+\`\`\`
+
+## Code Style
+
+- ESLint + Prettier enforced
+- Always run `npm run lint` and `npm run format` before committing
+```
+
+**STEP 3: WRITE CLAUDE.md to project root**
+
+---
+
+## Workflow - CLAUDE.md Update (After Every Task)
+
+Before staging files for git commit, check if the current task made structural changes:
+
+**ALWAYS UPDATE CLAUDE.md IF:**
+- New module was created → add to Folder Structure tree + Architecture module list
+- New Prisma model/migration was created → note in Database section
+- New infrastructure service added (docker-compose) → update Build & Run Commands
+- New role added → update Security section roles list
+- Dependency version upgraded (NestJS, Node, Prisma) → update Project Overview
+- New external API integration → add note in Architecture section
+
+**HOW TO UPDATE:**
+1. READ current CLAUDE.md
+2. EDIT only the affected sections (don't rewrite the entire file)
+3. Keep folder structure tree accurate — add new entries, remove deleted ones
+4. Keep it concise — factual entries only
+
+**NEVER:**
+- Bloat CLAUDE.md with implementation details
+- Remove sections that other tasks added
+- Add temporary or task-specific information
+- Forget to update the folder structure when adding new modules
+
+---
+
+## Git & PR Workflow
+
+After ALL code changes are complete and verified:
+
+1. CHECK status: `git status`
+2. CREATE branch: `git checkout -b feature/{descriptive-name}`
+   Naming: `feature/`, `fix/`, `refactor/`, `chore/`, `test/`
+3. UPDATE CLAUDE.md if structural changes were made (see "Workflow - CLAUDE.md Update")
+4. STAGE specific files (NEVER use `git add -A` or `git add .`):
+   ```bash
+   git add src/ prisma/ test/ CLAUDE.md
+   ```
+5. COMMIT with descriptive message:
+   ```bash
+   git commit -m "$(cat <<'EOF'
+   feat: add equipment domain with CRUD operations
+
+   Co-Authored-By: NestJS Agent <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+6. PUSH: `git push -u origin feature/{descriptive-name}`
+7. CREATE PR (add `--reviewer <username>` if the user specifies a reviewer):
+   ```bash
+   gh pr create --title "feat: add equipment domain" --body "$(cat <<'EOF'
+   ## Summary
+   - Add Equipment Prisma model with migration
+   - Add full CRUD (controller, service, repository)
+   - Add DTOs with validation and Swagger docs
+   - Add unit and e2e tests
+
+   ## Test plan
+   - [ ] `npm run build` passes
+   - [ ] `npm run lint` passes
+   - [ ] `npm run test` passes
+   - [ ] `npm run test:e2e` passes
+   - [ ] Swagger docs render correctly at /api/docs
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   EOF
+   )"
+   ```
+
+**NEVER:** Push to main, force push, `git add -A`, skip hooks, commit .env/credentials/build/
 
 ---
 

@@ -38,11 +38,13 @@ Format: `<type>: <description>`
 Examples:
 
 ```bash
-git commit -m "feat: add equipment domain with CRUD operations"
-git commit -m "fix: validate due date is in the future for work orders"
-git commit -m "chore: upgrade @nestjs/core to 11.0.0"
-git commit -m "test: add e2e tests for equipment endpoints"
-git commit -m "refactor: extract pagination helper to common utils"
+git commit -m "feat: add equipment domain with CRUD operations
+
+Co-Authored-By: NestJS Agent <noreply@anthropic.com>"
+
+git commit -m "fix: validate due date is in the future for work orders
+
+Co-Authored-By: NestJS Agent <noreply@anthropic.com>"
 ```
 
 Multi-line commit for complex changes:
@@ -56,9 +58,13 @@ feat: add equipment domain with CRUD operations
 - Add DTOs with class-validator decorators
 - Add Swagger documentation
 - Add unit and e2e tests
+
+Co-Authored-By: NestJS Agent <noreply@anthropic.com>
 EOF
 )"
 ```
+
+**Always include `Co-Authored-By: NestJS Agent <noreply@anthropic.com>` at the end of every commit message.**
 
 ## Pre-Push Checklist
 
@@ -91,6 +97,7 @@ npm run build && npm run lint && npm run test && npm run test:e2e
 git push -u origin feature/add-equipment-domain
 
 # Create PR with gh CLI
+# Add --reviewer <username> if specified by the user
 gh pr create --title "feat: add equipment domain" --body "$(cat <<'EOF'
 ## Summary
 - Add Equipment Prisma model with migration
