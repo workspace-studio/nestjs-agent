@@ -92,13 +92,14 @@ npm run build && npm run lint && npm run test && npm run test:e2e
 
 ## PR Creation
 
+**IMPORTANT: Always ask the user "Who should review this PR? (GitHub username)" before creating the PR.**
+
 ```bash
 # Push branch
 git push -u origin feature/add-equipment-domain
 
-# Create PR with gh CLI
-# Add --reviewer <username> if specified by the user
-gh pr create --title "feat: add equipment domain" --body "$(cat <<'EOF'
+# Create PR with gh CLI (use the reviewer username provided by the user)
+gh pr create --reviewer <username> --title "feat: add equipment domain" --body "$(cat <<'EOF'
 ## Summary
 - Add Equipment Prisma model with migration
 - Add full CRUD (controller, service, repository)

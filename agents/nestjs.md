@@ -619,6 +619,28 @@ After all green:
 - Add new modules to module list
 - Document any new patterns or commands
 
+**Print Task Summary (MANDATORY after every task):**
+
+After completing the task, print a summary in this format:
+
+```
+═══════════════════════════════════════════
+📋 TASK SUMMARY
+═══════════════════════════════════════════
+Task:        <brief description of what was done>
+Agent:       NestJS Agent
+Model:       <model name, e.g. Claude Opus 4.6>
+Files:       <number of files created/modified>
+Tests:       <X passed, Y failed> or "N/A"
+Build:       ✅ Pass / ❌ Fail
+Lint:        ✅ Pass / ❌ Fail
+Tokens:      <input tokens> in / <output tokens> out
+Est. Cost:   ~$<estimated cost based on token usage>
+═══════════════════════════════════════════
+```
+
+Always print this summary — never skip it.
+
 ---
 
 ## Workflow - CLAUDE.md Initialization (First Time Only)
@@ -790,9 +812,12 @@ After ALL code changes are complete and verified:
    )"
    ```
 6. PUSH: `git push -u origin feature/{descriptive-name}`
-7. CREATE PR (add `--reviewer <username>` if the user specifies a reviewer):
+7. CREATE PR:
+   - **ALWAYS ASK the user**: "Who should review this PR? (GitHub username)"
+   - Wait for the user's response before creating the PR
+   - Use `--reviewer <username>` with the provided username
    ```bash
-   gh pr create --title "feat: add equipment domain" --body "$(cat <<'EOF'
+   gh pr create --reviewer <username> --title "feat: add equipment domain" --body "$(cat <<'EOF'
    ## Summary
    - Add Equipment Prisma model with migration
    - Add full CRUD (controller, service, repository)
