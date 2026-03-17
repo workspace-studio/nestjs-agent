@@ -584,9 +584,14 @@ Add the new domain to the domain list in `CLAUDE.md` if the project has one.
 
 ```bash
 git checkout -b feature/add-equipment-domain
-git add .
-git commit -m "feat: add equipment domain with CRUD operations"
-gh pr create --title "feat: add equipment domain" --body "$(cat <<'EOF'
+git add src/ prisma/ test/ CLAUDE.md
+git commit -m "$(cat <<'EOF'
+feat: add equipment domain with CRUD operations
+
+Co-Authored-By: NestJS Agent <noreply@anthropic.com>
+EOF
+)"
+gh pr create --reviewer <username> --title "Resolves #<task_number>: <task_title>" --body "$(cat <<'EOF'
 ## Summary
 - Add Equipment Prisma model with migration
 - Add full CRUD (controller, service, repository)
@@ -598,6 +603,8 @@ gh pr create --title "feat: add equipment domain" --body "$(cat <<'EOF'
 - [ ] E2E tests pass
 - [ ] Swagger docs render correctly
 - [ ] CRUD operations work via API
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
 ```

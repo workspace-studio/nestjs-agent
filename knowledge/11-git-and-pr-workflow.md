@@ -99,7 +99,7 @@ npm run build && npm run lint && npm run test && npm run test:e2e
 git push -u origin feature/add-equipment-domain
 
 # Create PR with gh CLI (use the reviewer username provided by the user)
-gh pr create --reviewer <username> --title "feat: add equipment domain" --body "$(cat <<'EOF'
+gh pr create --reviewer <username> --title "Resolves #<task_number>: <task_title>" --body "$(cat <<'EOF'
 ## Summary
 - Add Equipment Prisma model with migration
 - Add full CRUD (controller, service, repository)

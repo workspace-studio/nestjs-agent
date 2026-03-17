@@ -817,7 +817,7 @@ After ALL code changes are complete and verified:
    - Wait for the user's response before creating the PR
    - Use `--reviewer <username>` with the provided username
    ```bash
-   gh pr create --reviewer <username> --title "feat: add equipment domain" --body "$(cat <<'EOF'
+   gh pr create --reviewer <username> --title "Resolves #<task_number>: <task_title>" --body "$(cat <<'EOF'
    ## Summary
    - Add Equipment Prisma model with migration
    - Add full CRUD (controller, service, repository)
