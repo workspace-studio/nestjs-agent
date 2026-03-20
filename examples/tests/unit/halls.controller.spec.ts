@@ -7,17 +7,17 @@ describe('HallsController', () => {
   let controller: HallsController;
   let service: jest.Mocked<HallsService>;
 
-  const mockUser = { id: 1, tenantId: 1, role: 'ADMIN' };
+  const mockUser = { id: 'user-1', tenantId: 'tenant-1', role: 'ADMIN' };
 
   const mockHall = {
-    id: 1,
+    id: 'clx1234567890',
     name: 'Main Hall',
     maxCapacity: 500,
     description: 'Large hall',
-    tenantId: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
+    tenantId: 'tenant-1',
+    entityStatus: 'ACTIVE',
+    created: new Date(),
+    modified: new Date(),
   };
 
   beforeEach(async () => {
@@ -54,7 +54,7 @@ describe('HallsController', () => {
       expect(result).toEqual(mockHall);
       expect(service.create).toHaveBeenCalledWith(
         { name: 'Main Hall', maxCapacity: 500 },
-        1,
+        'tenant-1',
       );
     });
 
@@ -70,15 +70,19 @@ describe('HallsController', () => {
   describe('findAll', () => {
     it('should return paginated halls', async () => {
       const paginatedResult = {
-        data: [mockHall],
-        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+        entities: [mockHall],
+        totalCount: 1,
+        pagination: { pageNumber: 0, pageSize: 20 },
       };
       service.findAll.mockResolvedValue(paginatedResult);
 
-      const result = await controller.findAll(1, 20, mockUser);
+      const result = await controller.findAll(
+        { pageNumber: 0, pageSize: 20 } as any,
+        mockUser,
+      );
 
       expect(result).toEqual(paginatedResult);
-      expect(service.findAll).toHaveBeenCalledWith(1, 1, 20);
+      expect(service.findAll).toHaveBeenCalledWith('tenant-1', { pageNumber: 0, pageSize: 20 });
     });
   });
 
@@ -86,7 +90,7 @@ describe('HallsController', () => {
     it('should return a hall', async () => {
       service.findOne.mockResolvedValue(mockHall);
 
-      const result = await controller.findOne(1, mockUser);
+      const result = await controller.findOne('clx1234567890', mockUser);
 
       expect(result).toEqual(mockHall);
     });
@@ -94,7 +98,7 @@ describe('HallsController', () => {
     it('should propagate NotFoundException', async () => {
       service.findOne.mockRejectedValue(new NotFoundException());
 
-      await expect(controller.findOne(999, mockUser)).rejects.toThrow(
+      await expect(controller.findOne('nonexistent', mockUser)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -105,7 +109,7 @@ describe('HallsController', () => {
       const updated = { ...mockHall, name: 'Updated' };
       service.update.mockResolvedValue(updated);
 
-      const result = await controller.update(1, { name: 'Updated' }, mockUser);
+      const result = await controller.update('clx1234567890', { name: 'Updated' }, mockUser);
 
       expect(result).toEqual(updated);
     });
@@ -115,9 +119,9 @@ describe('HallsController', () => {
     it('should remove a hall', async () => {
       service.remove.mockResolvedValue(undefined);
 
-      await controller.remove(1, mockUser);
+      await controller.remove('clx1234567890', mockUser);
 
-      expect(service.remove).toHaveBeenCalledWith(1, 1);
+      expect(service.remove).toHaveBeenCalledWith('clx1234567890', 'tenant-1');
     });
   });
 });

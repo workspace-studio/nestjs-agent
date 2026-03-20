@@ -6,7 +6,7 @@ import { AppModule } from '../../../app.module';
 describe('Halls (e2e)', () => {
   let app: INestApplication;
   let authToken: string;
-  let createdHallId: number;
+  let createdHallId: string;
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -27,7 +27,7 @@ describe('Halls (e2e)', () => {
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'admin@test.com', password: 'password123' });
-    authToken = loginResponse.body.data.accessToken;
+    authToken = loginResponse.body.accessToken;
   });
 
   afterAll(async () => {
@@ -42,9 +42,9 @@ describe('Halls (e2e)', () => {
         .send({ name: 'Test Hall', maxCapacity: 100, description: 'A test hall' })
         .expect(201);
 
-      expect(response.body.data).toHaveProperty('id');
-      expect(response.body.data.name).toBe('Test Hall');
-      createdHallId = response.body.data.id;
+      expect(response.body).toHaveProperty('id');
+      expect(response.body.name).toBe('Test Hall');
+      createdHallId = response.body.id;
     });
 
     it('should return 400 for invalid data', async () => {
@@ -78,8 +78,9 @@ describe('Halls (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body.data).toBeInstanceOf(Array);
-      expect(response.body.meta).toHaveProperty('total');
+      expect(response.body.entities).toBeInstanceOf(Array);
+      expect(response.body).toHaveProperty('totalCount');
+      expect(response.body).toHaveProperty('pagination');
     });
   });
 
@@ -90,12 +91,12 @@ describe('Halls (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
-      expect(response.body.data.id).toBe(createdHallId);
+      expect(response.body.id).toBe(createdHallId);
     });
 
     it('should return 404 for non-existent hall', async () => {
       await request(app.getHttpServer())
-        .get('/halls/999999')
+        .get('/halls/nonexistent-id')
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
     });
@@ -109,7 +110,7 @@ describe('Halls (e2e)', () => {
         .send({ name: 'Updated Hall' })
         .expect(200);
 
-      expect(response.body.data.name).toBe('Updated Hall');
+      expect(response.body.name).toBe('Updated Hall');
     });
   });
 

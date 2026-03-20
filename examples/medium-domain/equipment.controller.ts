@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -37,24 +36,24 @@ export class EquipmentController {
   @Get()
   @ApiOperation({ summary: 'Get all equipment' })
   @ApiResponse({ status: 200, description: 'List of equipment' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiQuery({ name: 'pageNumber', required: false, type: Number })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, enum: EquipmentStatus })
-  @ApiQuery({ name: 'hallId', required: false, type: Number })
+  @ApiQuery({ name: 'hallId', required: false, type: String })
   @ApiQuery({ name: 'search', required: false, type: String })
   findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
+    @Query('pageNumber') pageNumber: number = 0,
+    @Query('pageSize') pageSize: number = 20,
     @Query('status') status?: EquipmentStatus,
-    @Query('hallId') hallId?: number,
+    @Query('hallId') hallId?: string,
     @Query('search') search?: string,
     @User() user?: any,
   ) {
     return this.equipmentService.findAll(user.tenantId, {
-      page,
-      limit,
+      pageNumber,
+      pageSize,
       status,
-      hallId: hallId ? Number(hallId) : undefined,
+      hallId,
       search,
     });
   }
@@ -63,7 +62,7 @@ export class EquipmentController {
   @ApiOperation({ summary: 'Get equipment by ID' })
   @ApiResponse({ status: 200, description: 'Equipment found' })
   @ApiResponse({ status: 404, description: 'Equipment not found' })
-  findOne(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+  findOne(@Param('id') id: string, @User() user: any) {
     return this.equipmentService.findOne(id, user.tenantId);
   }
 
@@ -73,7 +72,7 @@ export class EquipmentController {
   @ApiResponse({ status: 200, description: 'Equipment updated successfully' })
   @ApiResponse({ status: 404, description: 'Equipment not found' })
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateEquipmentDto: UpdateEquipmentDto,
     @User() user: any,
   ) {
@@ -86,7 +85,7 @@ export class EquipmentController {
   @ApiOperation({ summary: 'Delete equipment' })
   @ApiResponse({ status: 204, description: 'Equipment deleted successfully' })
   @ApiResponse({ status: 404, description: 'Equipment not found' })
-  remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+  remove(@Param('id') id: string, @User() user: any) {
     return this.equipmentService.remove(id, user.tenantId);
   }
 }

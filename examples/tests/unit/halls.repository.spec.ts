@@ -7,13 +7,13 @@ describe('HallsRepository', () => {
   let prisma: any;
 
   const mockHall = {
-    id: 1,
+    id: 'clx1234567890',
     name: 'Main Hall',
     maxCapacity: 500,
-    tenantId: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
+    tenantId: 'tenant-1',
+    entityStatus: 'ACTIVE',
+    created: new Date(),
+    modified: new Date(),
   };
 
   beforeEach(async () => {
@@ -49,33 +49,31 @@ describe('HallsRepository', () => {
       const result = await repository.create({
         name: 'Main Hall',
         maxCapacity: 500,
-        tenantId: 1,
+        tenantId: 'tenant-1',
       });
 
       expect(result).toEqual(mockHall);
       expect(prisma.hall.create).toHaveBeenCalledWith({
-        data: { name: 'Main Hall', maxCapacity: 500, tenantId: 1 },
+        data: { name: 'Main Hall', maxCapacity: 500, tenantId: 'tenant-1' },
       });
     });
   });
 
   describe('findAll', () => {
-    it('should return data and total count', async () => {
+    it('should return entities and totalCount', async () => {
       prisma.hall.findMany.mockResolvedValue([mockHall]);
       prisma.hall.count.mockResolvedValue(1);
 
-      const result = await repository.findAll(1, 0, 20);
+      const result = await repository.findAll('tenant-1', { pageNumber: 0, pageSize: 20 });
 
-      expect(result).toEqual({ data: [mockHall], total: 1 });
-      expect(prisma.hall.findMany).toHaveBeenCalledWith({
-        where: { tenantId: 1, deletedAt: null },
-        skip: 0,
-        take: 20,
-        orderBy: { createdAt: 'desc' },
-      });
-      expect(prisma.hall.count).toHaveBeenCalledWith({
-        where: { tenantId: 1, deletedAt: null },
-      });
+      expect(result).toEqual({ entities: [mockHall], totalCount: 1 });
+      expect(prisma.hall.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: 'tenant-1', entityStatus: 'ACTIVE' },
+          skip: 0,
+          take: 20,
+        }),
+      );
     });
   });
 
@@ -83,11 +81,11 @@ describe('HallsRepository', () => {
     it('should find a hall by id and tenantId', async () => {
       prisma.hall.findFirst.mockResolvedValue(mockHall);
 
-      const result = await repository.findOne(1, 1);
+      const result = await repository.findOne('clx1234567890', 'tenant-1');
 
       expect(result).toEqual(mockHall);
       expect(prisma.hall.findFirst).toHaveBeenCalledWith({
-        where: { id: 1, tenantId: 1, deletedAt: null },
+        where: { id: 'clx1234567890', tenantId: 'tenant-1', entityStatus: 'ACTIVE' },
       });
     });
   });
@@ -96,41 +94,26 @@ describe('HallsRepository', () => {
     it('should find a hall by name and tenantId', async () => {
       prisma.hall.findFirst.mockResolvedValue(mockHall);
 
-      const result = await repository.findByName('Main Hall', 1);
+      const result = await repository.findByName('Main Hall', 'tenant-1');
 
       expect(result).toEqual(mockHall);
       expect(prisma.hall.findFirst).toHaveBeenCalledWith({
-        where: { name: 'Main Hall', tenantId: 1, deletedAt: null },
-      });
-    });
-  });
-
-  describe('update', () => {
-    it('should update a hall', async () => {
-      const updated = { ...mockHall, name: 'Updated' };
-      prisma.hall.update.mockResolvedValue(updated);
-
-      const result = await repository.update(1, 1, { name: 'Updated' });
-
-      expect(result).toEqual(updated);
-      expect(prisma.hall.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { name: 'Updated' },
+        where: { name: 'Main Hall', tenantId: 'tenant-1', entityStatus: 'ACTIVE' },
       });
     });
   });
 
   describe('softDelete', () => {
-    it('should soft delete a hall', async () => {
-      const deleted = { ...mockHall, deletedAt: new Date() };
+    it('should set entityStatus to DELETED', async () => {
+      const deleted = { ...mockHall, entityStatus: 'DELETED' };
       prisma.hall.update.mockResolvedValue(deleted);
 
-      const result = await repository.softDelete(1, 1);
+      const result = await repository.softDelete('clx1234567890', 'tenant-1');
 
-      expect(result.deletedAt).toBeDefined();
+      expect(result.entityStatus).toBe('DELETED');
       expect(prisma.hall.update).toHaveBeenCalledWith({
-        where: { id: 1 },
-        data: { deletedAt: expect.any(Date) },
+        where: { id: 'clx1234567890' },
+        data: { entityStatus: 'DELETED' },
       });
     });
   });

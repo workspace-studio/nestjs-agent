@@ -231,3 +231,67 @@ src/
     work-order/
       ...same structure
 ```
+
+## Scheduled Tasks Module Pattern
+
+For cron jobs and scheduled tasks, use `@nestjs/schedule`:
+
+```typescript
+// src/modules/tasks/tasks.module.ts
+import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
+
+import { TasksService } from './tasks.service';
+import { TasksController } from './tasks.controller';
+
+@Module({
+  imports: [ScheduleModule.forRoot()],
+  controllers: [TasksController],
+  providers: [TasksService],
+})
+export class TasksModule {}
+```
+
+```typescript
+// src/modules/tasks/tasks.service.ts
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
+
+@Injectable()
+export class TasksService {
+  private readonly logger = new Logger(TasksService.name);
+
+  constructor(private readonly configService: ConfigService) {}
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async cleanupExpiredTokens() {
+    if (this.configService.get('NODE_ENV') === 'test') return;
+
+    this.logger.log('Running expired token cleanup...');
+    // cleanup logic
+  }
+}
+```
+
+```typescript
+// src/modules/tasks/tasks.controller.ts — manual triggers (admin only)
+import { Controller, Post } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
+
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Role } from 'src/auth/enums/role.enum';
+
+@ApiExcludeController()
+@Controller('tasks')
+export class TasksController {
+  constructor(private readonly tasksService: TasksService) {}
+
+  @Post('cleanup-tokens')
+  @Roles(Role.ADMIN)
+  async triggerTokenCleanup() {
+    await this.tasksService.cleanupExpiredTokens();
+    return { message: 'Token cleanup completed' };
+  }
+}
+```

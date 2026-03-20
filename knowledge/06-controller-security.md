@@ -41,7 +41,7 @@ import { WorkOrderResponseDto } from './dto/work-order-response.dto';
 import { WorkOrderService } from './work-order.service';
 
 @ApiTags('Work Orders')
-@ApiBearerAuth('access-token')
+@ApiBearerAuth('bearerAuth')
 @Controller('work-orders')
 export class WorkOrderController {
   constructor(private readonly workOrderService: WorkOrderService) {}
@@ -160,13 +160,16 @@ export interface JwtPayload {
 
 ## Role Enum
 
+Define project-specific roles in the Role enum. The values should match the Prisma `UserRole` enum:
+
 ```typescript
 // src/auth/enums/role.enum.ts
 export enum Role {
-  ADMIN = 'ADMIN',
-  MANAGER = 'MANAGER',
-  TECHNICIAN = 'TECHNICIAN',
-  EMPLOYEE = 'EMPLOYEE',
+  // Define project-specific roles here
+  // Example:
+  // ADMIN = 'ADMIN',
+  // MANAGER = 'MANAGER',
+  // USER = 'USER',
 }
 ```
 

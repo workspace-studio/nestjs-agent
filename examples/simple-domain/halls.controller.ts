@@ -7,17 +7,17 @@ import {
   Body,
   Param,
   Query,
-  ParseIntPipe,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { HallsService } from './halls.service';
 import { CreateHallDto } from './dto/create-hall.dto';
 import { UpdateHallDto } from './dto/update-hall.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { User } from '../../common/decorators/user.decorator';
 import { Role } from '../../common/enums/role.enum';
+import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 
 @ApiTags('Halls')
 @Controller('halls')
@@ -37,21 +37,15 @@ export class HallsController {
   @Get()
   @ApiOperation({ summary: 'Get all halls' })
   @ApiResponse({ status: 200, description: 'List of halls' })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 20,
-    @User() user: any,
-  ) {
-    return this.hallsService.findAll(user.tenantId, page, limit);
+  findAll(@Query() query: PaginationQueryDto, @User() user: any) {
+    return this.hallsService.findAll(user.tenantId, query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a hall by ID' })
   @ApiResponse({ status: 200, description: 'Hall found' })
   @ApiResponse({ status: 404, description: 'Hall not found' })
-  findOne(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+  findOne(@Param('id') id: string, @User() user: any) {
     return this.hallsService.findOne(id, user.tenantId);
   }
 
@@ -61,7 +55,7 @@ export class HallsController {
   @ApiResponse({ status: 200, description: 'Hall updated successfully' })
   @ApiResponse({ status: 404, description: 'Hall not found' })
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateHallDto: UpdateHallDto,
     @User() user: any,
   ) {
@@ -74,7 +68,7 @@ export class HallsController {
   @ApiOperation({ summary: 'Delete a hall' })
   @ApiResponse({ status: 204, description: 'Hall deleted successfully' })
   @ApiResponse({ status: 404, description: 'Hall not found' })
-  remove(@Param('id', ParseIntPipe) id: number, @User() user: any) {
+  remove(@Param('id') id: string, @User() user: any) {
     return this.hallsService.remove(id, user.tenantId);
   }
 }

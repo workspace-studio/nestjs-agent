@@ -2,10 +2,10 @@ import { ExecutionContext } from '@nestjs/common';
 
 export function mockUserFactory(overrides: Record<string, any> = {}) {
   return {
-    id: 1,
+    id: 'test-user-id',
     email: 'test@test.com',
     role: 'ADMIN',
-    tenantId: 1,
+    tenantId: 'test-tenant-id',
     ...overrides,
   };
 }

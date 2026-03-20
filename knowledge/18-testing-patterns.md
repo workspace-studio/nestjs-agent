@@ -79,9 +79,9 @@ describe('EquipmentService', () => {
     warrantyEnd: new Date('2026-01-01'),
     locationId: null,
     location: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
+    created: new Date(),
+    modified: new Date(),
+    entityStatus: 'ACTIVE',
   };
 
   beforeEach(async () => {
@@ -159,7 +159,7 @@ describe('EquipmentService', () => {
   describe('remove', () => {
     it('should soft delete equipment', async () => {
       repository.findById.mockResolvedValue(mockEquipment);
-      repository.softDelete.mockResolvedValue({ ...mockEquipment, deletedAt: new Date() });
+      repository.softDelete.mockResolvedValue({ ...mockEquipment, entityStatus: 'DELETED' });
 
       await service.remove('equip-1');
 
@@ -229,8 +229,8 @@ describe('EquipmentController', () => {
     purchaseDate: null,
     warrantyEnd: null,
     location: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    created: new Date(),
+    modified: new Date(),
   };
 
   beforeEach(async () => {
@@ -284,12 +284,17 @@ describe('EquipmentController', () => {
 
   describe('findAll', () => {
     it('should return paginated results', async () => {
-      const paginated = { data: [mockResponse], meta: { total: 1, page: 1, limit: 20, totalPages: 1, hasNextPage: false, hasPreviousPage: false } };
+      const paginated = {
+        entities: [mockResponse],
+        totalCount: 1,
+        pagination: { pageNumber: 0, pageSize: 20 },
+      };
       service.findAll.mockResolvedValue(paginated as any);
 
-      const result = await controller.findAll({ page: 1, limit: 20 } as any);
+      const result = await controller.findAll({ pageNumber: 0, pageSize: 20 } as any);
 
-      expect(result.data).toHaveLength(1);
+      expect(result.entities).toHaveLength(1);
+      expect(result.totalCount).toBe(1);
     });
   });
 
@@ -325,7 +330,7 @@ describe('EquipmentRepository', () => {
     const mockPrisma = {
       equipment: {
         create: jest.fn(),
-        findUnique: jest.fn(),
+        findFirst: jest.fn(),
         findMany: jest.fn(),
         update: jest.fn(),
         count: jest.fn(),
@@ -351,7 +356,7 @@ describe('EquipmentRepository', () => {
   describe('create', () => {
     it('should call prisma.equipment.create with correct data', async () => {
       const data = { name: 'HVAC', serialNumber: 'SN-001' };
-      const expected = { id: '1', ...data, createdAt: new Date(), updatedAt: new Date() };
+      const expected = { id: '1', ...data, created: new Date(), modified: new Date() };
       prisma.equipment.create.mockResolvedValue(expected);
 
       const result = await repository.create(data as any);
@@ -362,20 +367,20 @@ describe('EquipmentRepository', () => {
   });
 
   describe('findById', () => {
-    it('should query with id and deletedAt: null', async () => {
-      const expected = { id: '1', name: 'HVAC', deletedAt: null };
-      prisma.equipment.findUnique.mockResolvedValue(expected);
+    it('should query with id and entityStatus ACTIVE', async () => {
+      const expected = { id: '1', name: 'HVAC', entityStatus: 'ACTIVE' };
+      prisma.equipment.findFirst.mockResolvedValue(expected);
 
       const result = await repository.findById('1');
 
-      expect(prisma.equipment.findUnique).toHaveBeenCalledWith({
-        where: { id: '1', deletedAt: null },
+      expect(prisma.equipment.findFirst).toHaveBeenCalledWith({
+        where: { id: '1', entityStatus: 'ACTIVE' },
       });
       expect(result).toEqual(expected);
     });
 
     it('should return null when not found', async () => {
-      prisma.equipment.findUnique.mockResolvedValue(null);
+      prisma.equipment.findFirst.mockResolvedValue(null);
 
       const result = await repository.findById('nonexistent');
 
@@ -384,27 +389,27 @@ describe('EquipmentRepository', () => {
   });
 
   describe('findAll', () => {
-    it('should use $transaction for data and count', async () => {
+    it('should use $transaction for entities and count', async () => {
       const mockData = [{ id: '1', name: 'HVAC' }];
       prisma.$transaction.mockResolvedValue([mockData, 1]);
 
-      const result = await repository.findAll({ page: 1, limit: 20 });
+      const result = await repository.findAll({ pageNumber: 0, pageSize: 20 });
 
       expect(prisma.$transaction).toHaveBeenCalled();
-      expect(result).toEqual({ data: mockData, total: 1 });
+      expect(result).toEqual({ entities: mockData, totalCount: 1 });
     });
   });
 
   describe('softDelete', () => {
-    it('should set deletedAt to current date', async () => {
-      const expected = { id: '1', deletedAt: new Date() };
+    it('should set entityStatus to DELETED', async () => {
+      const expected = { id: '1', entityStatus: 'DELETED' };
       prisma.equipment.update.mockResolvedValue(expected);
 
       await repository.softDelete('1');
 
       expect(prisma.equipment.update).toHaveBeenCalledWith({
         where: { id: '1' },
-        data: { deletedAt: expect.any(Date) },
+        data: { entityStatus: 'DELETED' },
       });
     });
   });
@@ -426,7 +431,7 @@ describe('EquipmentRepository', () => {
       expect(prisma.equipment.count).toHaveBeenCalledWith({
         where: {
           serialNumber: 'SN-001',
-          deletedAt: null,
+          entityStatus: 'ACTIVE',
           id: { not: 'equip-1' },
         },
       });
@@ -504,72 +509,7 @@ describe('RolesGuard', () => {
 
 ---
 
-## E) Interceptor Unit Test (ResponseInterceptor)
-
-```typescript
-// src/common/interceptors/response.interceptor.spec.ts
-import { CallHandler, ExecutionContext } from '@nestjs/common';
-import { of } from 'rxjs';
-
-import { ResponseInterceptor } from './response.interceptor';
-
-describe('ResponseInterceptor', () => {
-  let interceptor: ResponseInterceptor<any>;
-
-  beforeEach(() => {
-    interceptor = new ResponseInterceptor();
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const mockExecutionContext = {} as ExecutionContext;
-
-  it('should wrap response in { success, data }', (done) => {
-    const mockData = { id: '1', name: 'Test' };
-    const callHandler: CallHandler = { handle: () => of(mockData) };
-
-    interceptor.intercept(mockExecutionContext, callHandler).subscribe((result) => {
-      expect(result).toEqual({
-        success: true,
-        data: { id: '1', name: 'Test' },
-      });
-      done();
-    });
-  });
-
-  it('should extract meta from paginated responses', (done) => {
-    const paginatedData = {
-      data: [{ id: '1' }],
-      meta: { total: 1, page: 1, limit: 20, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
-    };
-    const callHandler: CallHandler = { handle: () => of(paginatedData) };
-
-    interceptor.intercept(mockExecutionContext, callHandler).subscribe((result) => {
-      expect(result).toEqual({
-        success: true,
-        data: [{ id: '1' }],
-        meta: expect.objectContaining({ total: 1, page: 1 }),
-      });
-      done();
-    });
-  });
-
-  it('should handle null data', (done) => {
-    const callHandler: CallHandler = { handle: () => of(null) };
-
-    interceptor.intercept(mockExecutionContext, callHandler).subscribe((result) => {
-      expect(result).toEqual({ success: true, data: null });
-      done();
-    });
-  });
-});
-```
-
----
-
-## F) Transaction Mock Test
+## E) Transaction Mock Test
 
 ```typescript
 // Example: testing a service method that uses $transaction
@@ -644,7 +584,7 @@ describe('WorkOrderService - assignWithLog', () => {
 
 ---
 
-## G) Pipe Unit Test
+## F) Pipe Unit Test
 
 ```typescript
 // src/common/pipes/file-validation.pipe.spec.ts
@@ -704,7 +644,7 @@ describe('FileValidationPipe', () => {
 
 ---
 
-## H) E2E Test
+## G) E2E Test
 
 ```typescript
 // test/equipment.e2e-spec.ts
@@ -813,9 +753,10 @@ describe('Equipment (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(response.body.meta).toBeDefined();
-      expect(response.body.meta.total).toBeGreaterThanOrEqual(1);
+      expect(Array.isArray(response.body.entities)).toBe(true);
+      expect(response.body.totalCount).toBeGreaterThanOrEqual(1);
+      expect(response.body.pagination).toBeDefined();
+      expect(response.body.pagination.pageNumber).toBeDefined();
     });
 
     it('should filter by search term', async () => {
@@ -824,7 +765,7 @@ describe('Equipment (e2e)', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
-      expect(response.body.data.length).toBeGreaterThanOrEqual(1);
+      expect(response.body.entities.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -893,7 +834,7 @@ describe('Equipment (e2e)', () => {
 
 ---
 
-## I) Test Utilities
+## H) Test Utilities
 
 ```typescript
 // test/utils/test-helpers.ts

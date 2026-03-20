@@ -28,14 +28,14 @@ model Equipment {
 
   workOrders WorkOrder[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  created      DateTime     @default(now())
+  modified     DateTime     @updatedAt
+  entityStatus EntityStatus @default(ACTIVE)
 
   @@index([serialNumber])
   @@index([status])
   @@index([locationId])
-  @@index([deletedAt])
+  @@index([entityStatus])
   @@map("equipment")
 }
 ```
@@ -55,6 +55,7 @@ src/domains/equipment/
     update-equipment.dto.ts
     query-equipment.dto.ts
     equipment-response.dto.ts
+    equipment-list-response.dto.ts
   enums/
     equipment-status.enum.ts
   equipment.controller.ts
@@ -141,19 +142,19 @@ import { Type } from 'class-transformer';
 import { EquipmentStatus } from '@prisma/client';
 
 export class QueryEquipmentDto {
-  @ApiPropertyOptional({ example: 1 })
+  @ApiPropertyOptional({ example: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
-  page?: number;
+  @Min(0)
+  pageNumber?: number;
 
   @ApiPropertyOptional({ example: 20 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  limit?: number;
+  pageSize?: number;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -169,6 +170,16 @@ export class QueryEquipmentDto {
   @IsOptional()
   @IsString()
   locationId?: string;
+
+  @ApiPropertyOptional({ example: 'name' })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({ example: 'ASC', enum: ['ASC', 'DESC'] })
+  @IsOptional()
+  @IsString()
+  sortDirection?: string;
 }
 ```
 
@@ -205,10 +216,10 @@ export class EquipmentResponseDto {
   location?: { id: string; name: string } | null;
 
   @ApiProperty()
-  createdAt: Date;
+  created: Date;
 
   @ApiProperty()
-  updatedAt: Date;
+  modified: Date;
 }
 ```
 
@@ -216,28 +227,37 @@ export class EquipmentResponseDto {
 
 ```typescript
 // src/domains/equipment/equipment.repository.ts
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { Equipment, Prisma } from '@prisma/client';
 
 import { PrismaService } from 'src/common/prisma/prisma.service';
 
 @Injectable()
 export class EquipmentRepository {
+  private readonly ALLOWED_SORT_FIELDS = ['name', 'created', 'modified'] as const;
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Prisma.EquipmentCreateInput): Promise<Equipment> {
-    return this.prisma.equipment.create({ data });
+    try {
+      return await this.prisma.equipment.create({ data });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException(`Equipment with serial number '${data.serialNumber}' already exists`);
+      }
+      throw error;
+    }
   }
 
   async findById(id: string): Promise<Equipment | null> {
-    return this.prisma.equipment.findUnique({
-      where: { id, deletedAt: null },
+    return this.prisma.equipment.findFirst({
+      where: { id, entityStatus: 'ACTIVE' },
     });
   }
 
   async findByIdWithRelations(id: string): Promise<Equipment | null> {
-    return this.prisma.equipment.findUnique({
-      where: { id, deletedAt: null },
+    return this.prisma.equipment.findFirst({
+      where: { id, entityStatus: 'ACTIVE' },
       include: {
         location: { select: { id: true, name: true } },
       },
@@ -245,17 +265,17 @@ export class EquipmentRepository {
   }
 
   async findAll(params: {
-    page: number;
-    limit: number;
+    pageNumber: number;
+    pageSize: number;
     status?: string;
     locationId?: string;
     search?: string;
-  }): Promise<{ data: Equipment[]; total: number }> {
-    const { page, limit, status, locationId, search } = params;
-    const skip = (page - 1) * limit;
+  }): Promise<{ entities: Equipment[]; totalCount: number }> {
+    const { pageNumber, pageSize, status, locationId, search } = params;
+    const skip = pageNumber * pageSize;
 
     const where: Prisma.EquipmentWhereInput = {
-      deletedAt: null,
+      entityStatus: 'ACTIVE',
       ...(status && { status: status as any }),
       ...(locationId && { locationId }),
       ...(search && {
@@ -267,18 +287,18 @@ export class EquipmentRepository {
       }),
     };
 
-    const [data, total] = await this.prisma.$transaction([
+    const [entities, totalCount] = await this.prisma.$transaction([
       this.prisma.equipment.findMany({
         where,
         skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
+        take: pageSize,
+        orderBy: { created: 'desc' },
         include: { location: { select: { id: true, name: true } } },
       }),
       this.prisma.equipment.count({ where }),
     ]);
 
-    return { data, total };
+    return { entities, totalCount };
   }
 
   async update(id: string, data: Prisma.EquipmentUpdateInput): Promise<Equipment> {
@@ -288,7 +308,7 @@ export class EquipmentRepository {
   async softDelete(id: string): Promise<Equipment> {
     return this.prisma.equipment.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: { entityStatus: 'DELETED' },
     });
   }
 
@@ -296,7 +316,7 @@ export class EquipmentRepository {
     const count = await this.prisma.equipment.count({
       where: {
         serialNumber,
-        deletedAt: null,
+        entityStatus: 'ACTIVE',
         ...(excludeId && { id: { not: excludeId } }),
       },
     });
@@ -315,8 +335,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-
-import { buildPaginatedResult, PaginatedResult } from 'src/common/utils/pagination';
 
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { EquipmentResponseDto } from './dto/equipment-response.dto';
@@ -350,19 +368,23 @@ export class EquipmentService {
     return this.toResponseDto(equipment);
   }
 
-  async findAll(query: QueryEquipmentDto): Promise<PaginatedResult<EquipmentResponseDto>> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
+  async findAll(query: QueryEquipmentDto) {
+    const pageNumber = query.pageNumber ?? 0;
+    const pageSize = query.pageSize ?? 20;
 
-    const { data, total } = await this.equipmentRepository.findAll({
-      page,
-      limit,
+    const { entities, totalCount } = await this.equipmentRepository.findAll({
+      pageNumber,
+      pageSize,
       status: query.status,
       locationId: query.locationId,
       search: query.search,
     });
 
-    return buildPaginatedResult(data.map((e) => this.toResponseDto(e)), total, { page, limit });
+    return {
+      entities: entities.map((e) => this.toResponseDto(e)),
+      totalCount,
+      pagination: { pageNumber, pageSize },
+    };
   }
 
   async findOne(id: string): Promise<EquipmentResponseDto> {
@@ -419,8 +441,8 @@ export class EquipmentService {
       purchaseDate: equipment.purchaseDate,
       warrantyEnd: equipment.warrantyEnd,
       location: equipment.location ?? null,
-      createdAt: equipment.createdAt,
-      updatedAt: equipment.updatedAt,
+      created: equipment.created,
+      modified: equipment.modified,
     };
   }
 }
@@ -464,7 +486,7 @@ import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { EquipmentService } from './equipment.service';
 
 @ApiTags('Equipment')
-@ApiBearerAuth('access-token')
+@ApiBearerAuth('bearerAuth')
 @Controller('equipment')
 export class EquipmentController {
   constructor(private readonly equipmentService: EquipmentService) {}

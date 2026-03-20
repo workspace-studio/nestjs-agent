@@ -1,5 +1,5 @@
 import { applyDecorators, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { Role } from '../../../common/enums/role.enum';
 
@@ -17,8 +17,6 @@ export function GetHallsApi() {
   return applyDecorators(
     ApiOperation({ summary: 'Get all halls' }),
     ApiResponse({ status: 200, description: 'List of halls' }),
-    ApiQuery({ name: 'page', required: false, type: Number }),
-    ApiQuery({ name: 'limit', required: false, type: Number }),
   );
 }
 

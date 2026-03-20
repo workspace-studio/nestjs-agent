@@ -33,42 +33,8 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: 1
       MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    ports:
-      - '6379:6379'
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    command: redis-server --appendonly yes
-
-  minio:
-    image: minio/minio:latest
-    container_name: minio
-    ports:
-      - '9000:9000'
-      - '9001:9001'
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
 volumes:
   postgres_data:
-  redis_data:
-  minio_data:
 ```
 
 ## Dockerfile (Multi-Stage)
@@ -328,22 +294,6 @@ JWT_EXPIRATION=1d
 SMTP_HOST=localhost
 SMTP_PORT=1025
 EMAIL_FROM=noreply@myapp.local
-
-# S3 / MinIO
-S3_ENDPOINT=http://localhost:9000
-S3_BUCKET=myapp-dev
-AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=minioadmin
-AWS_REGION=us-east-1
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-
-# Push Notifications (optional)
-VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
-VAPID_EMAIL=admin@example.com
 ```
 
 ## Starting Infrastructure

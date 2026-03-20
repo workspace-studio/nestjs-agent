@@ -9,10 +9,10 @@ import { UpdateEquipmentDto } from './dto/update-equipment.dto';
 import { HallsRepository } from '../simple-domain/halls.repository';
 
 interface FindAllOptions {
-  page: number;
-  limit: number;
+  pageNumber: number;
+  pageSize: number;
   status?: EquipmentStatus;
-  hallId?: number;
+  hallId?: string;
   search?: string;
 }
 
@@ -23,7 +23,7 @@ export class EquipmentService {
     private readonly hallsRepository: HallsRepository,
   ) {}
 
-  async create(createEquipmentDto: CreateEquipmentDto, tenantId: number) {
+  async create(createEquipmentDto: CreateEquipmentDto, tenantId: string) {
     const hall = await this.hallsRepository.findOne(
       createEquipmentDto.hallId,
       tenantId,
@@ -37,29 +37,23 @@ export class EquipmentService {
     return this.equipmentRepository.create({ ...createEquipmentDto, tenantId });
   }
 
-  async findAll(tenantId: number, options: FindAllOptions) {
-    const { page, limit, status, hallId, search } = options;
-    const skip = (page - 1) * limit;
-
-    const { data, total } = await this.equipmentRepository.findAll(
+  async findAll(tenantId: string, options: FindAllOptions) {
+    const { entities, totalCount } = await this.equipmentRepository.findAll(
       tenantId,
-      skip,
-      limit,
-      { status, hallId, search },
+      options,
     );
 
     return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+      entities,
+      totalCount,
+      pagination: {
+        pageNumber: options.pageNumber,
+        pageSize: options.pageSize,
       },
     };
   }
 
-  async findOne(id: number, tenantId: number) {
+  async findOne(id: string, tenantId: string) {
     const equipment = await this.equipmentRepository.findOne(id, tenantId);
     if (!equipment) {
       throw new NotFoundException(`Equipment with ID ${id} not found`);
@@ -68,9 +62,9 @@ export class EquipmentService {
   }
 
   async update(
-    id: number,
+    id: string,
     updateEquipmentDto: UpdateEquipmentDto,
-    tenantId: number,
+    tenantId: string,
   ) {
     await this.findOne(id, tenantId);
 
@@ -89,7 +83,7 @@ export class EquipmentService {
     return this.equipmentRepository.update(id, tenantId, updateEquipmentDto);
   }
 
-  async remove(id: number, tenantId: number) {
+  async remove(id: string, tenantId: string) {
     await this.findOne(id, tenantId);
     return this.equipmentRepository.softDelete(id, tenantId);
   }

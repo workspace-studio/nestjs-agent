@@ -1,54 +1,21 @@
 # Interceptors & Middleware
 
-## ResponseInterceptor
+## Response Format
 
-Wraps all successful responses in a standard format:
+Controllers return data directly — no response wrapper. List endpoints return Serwizz format:
 
-```typescript
-// src/common/interceptors/response.interceptor.ts
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
-import { Observable, map } from 'rxjs';
-
-export interface WrappedResponse<T> {
-  success: boolean;
-  data: T;
-  meta?: Record<string, any>;
-}
-
-@Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, WrappedResponse<T>> {
-  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<WrappedResponse<T>> {
-    return next.handle().pipe(
-      map((data) => {
-        // If data already has a meta property (pagination), extract it
-        if (data && typeof data === 'object' && 'meta' in data && 'data' in data) {
-          const { data: innerData, meta } = data as any;
-          return {
-            success: true,
-            data: innerData,
-            meta,
-          };
-        }
-
-        return {
-          success: true,
-          data,
-        };
-      }),
-    );
+```json
+{
+  "entities": [...],
+  "totalCount": 42,
+  "pagination": {
+    "pageNumber": 0,
+    "pageSize": 20
   }
 }
 ```
 
-Response format:
-
-```json
-{
-  "success": true,
-  "data": { "id": "abc", "name": "Item" },
-  "meta": { "total": 100, "page": 1, "limit": 20 }
-}
-```
+Single entity endpoints return the entity directly (no wrapper).
 
 ## HTTP Logging Middleware
 
@@ -111,9 +78,6 @@ app.useGlobalPipes(
     transform: true,                  // Auto-transform payloads to DTO instances
     whitelist: true,                   // Strip properties not in DTO
     forbidNonWhitelisted: true,        // Throw error for unknown properties
-    transformOptions: {
-      enableImplicitConversion: true,  // Convert query string types (string -> number)
-    },
   }),
 );
 ```
@@ -183,7 +147,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { LoggingExceptionFilter } from './common/filters/exception.filter';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
 async function bootstrap() {
@@ -204,13 +167,11 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
-      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
   // Interceptors
   app.useGlobalInterceptors(
-    new ResponseInterceptor(),
     new ClassSerializerInterceptor(app.get(Reflector)),
     new TimeoutInterceptor(30000),
   );
@@ -222,10 +183,10 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('My API')
     .setVersion('1.0')
-    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'bearerAuth')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('swagger-ui', app, document);
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
@@ -242,7 +203,6 @@ import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
   providers: [
     { provide: APP_PIPE, useValue: new ValidationPipe({ transform: true, whitelist: true }) },
     { provide: APP_FILTER, useClass: LoggingExceptionFilter },
-    { provide: APP_INTERCEPTOR, useClass: ResponseInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TimeoutInterceptor },
   ],
 })

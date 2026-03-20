@@ -24,7 +24,7 @@ async function bootstrap() {
         description: 'Enter JWT token',
         in: 'header',
       },
-      'access-token',
+      'bearerAuth',
     )
     .addTag('Auth', 'Authentication endpoints')
     .addTag('Users', 'User management')
@@ -32,7 +32,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
+  SwaggerModule.setup('swagger-ui', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
       tagsSorter: 'alpha',
@@ -152,7 +152,7 @@ export class UserResponseDto {
 
   @Expose()
   @ApiProperty({ example: '2024-01-15T10:30:00.000Z' })
-  createdAt: Date;
+  created: Date;
 }
 ```
 
@@ -195,7 +195,7 @@ import { UserResponseDto } from './dto/user-response.dto';
 import { UserService } from './user.service';
 
 @ApiTags('Users')
-@ApiBearerAuth('access-token')
+@ApiBearerAuth('bearerAuth')
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
@@ -213,15 +213,15 @@ export class UserController {
   @Get()
   @ApiOperation({ summary: 'List all users' })
   @ApiOkResponse({ description: 'List of users', type: [UserResponseDto] })
-  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({ name: 'pageNumber', required: false, type: Number, example: 0 })
+  @ApiQuery({ name: 'pageSize', required: false, type: Number, example: 20 })
   @ApiQuery({ name: 'search', required: false, type: String })
   async findAll(
-    @Query('page') page = 1,
-    @Query('limit') limit = 20,
+    @Query('pageNumber') pageNumber = 0,
+    @Query('pageSize') pageSize = 20,
     @Query('search') search?: string,
   ) {
-    return this.userService.findAll({ page, limit, search });
+    return this.userService.findAll({ pageNumber, pageSize, search });
   }
 
   @Get(':id')
@@ -270,7 +270,7 @@ import { Role } from 'src/auth/enums/role.enum';
 export function AdminOnly() {
   return applyDecorators(
     Roles(Role.ADMIN),
-    ApiBearerAuth('access-token'),
+    ApiBearerAuth('bearerAuth'),
     ApiUnauthorizedResponse({ description: 'Unauthorized' }),
     ApiForbiddenResponse({ description: 'Forbidden - Admin role required' }),
   );
@@ -309,36 +309,41 @@ status: WorkOrderStatus;
 ```typescript
 import { ApiProperty } from '@nestjs/swagger';
 
-export class PaginationMeta {
-  @ApiProperty({ example: 100 })
-  total: number;
-
-  @ApiProperty({ example: 1 })
-  page: number;
+export class PaginationMetaDto {
+  @ApiProperty({ example: 0 })
+  pageNumber: number;
 
   @ApiProperty({ example: 20 })
-  limit: number;
-
-  @ApiProperty({ example: 5 })
-  totalPages: number;
-
-  @ApiProperty({ example: true })
-  hasNextPage: boolean;
-
-  @ApiProperty({ example: false })
-  hasPreviousPage: boolean;
+  pageSize: number;
 }
 
 export class PaginatedResponseDto<T> {
-  data: T[];
+  entities: T[];
 
-  @ApiProperty({ type: PaginationMeta })
-  meta: PaginationMeta;
+  @ApiProperty()
+  totalCount: number;
+
+  @ApiProperty({ type: PaginationMetaDto })
+  pagination: PaginationMetaDto;
 }
 
 // For Swagger generic type, create concrete classes:
 export class PaginatedUserResponseDto extends PaginatedResponseDto<UserResponseDto> {
   @ApiProperty({ type: [UserResponseDto] })
-  data: UserResponseDto[];
+  entities: UserResponseDto[];
+}
+```
+
+## @ApiExcludeController
+
+Use `@ApiExcludeController()` to hide internal endpoints (e.g., scheduled task triggers) from Swagger:
+
+```typescript
+import { ApiExcludeController } from '@nestjs/swagger';
+
+@ApiExcludeController()
+@Controller('tasks')
+export class TasksController {
+  // These endpoints won't appear in Swagger docs
 }
 ```

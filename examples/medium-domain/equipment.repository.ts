@@ -1,15 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EquipmentStatus } from './dto/create-equipment.dto';
 
 interface FindAllFilters {
+  pageNumber: number;
+  pageSize: number;
   status?: EquipmentStatus;
-  hallId?: number;
+  hallId?: string;
   search?: string;
 }
 
 @Injectable()
 export class EquipmentRepository {
+  private readonly ALLOWED_SORT_FIELDS = ['name', 'serialNumber', 'created', 'modified'] as const;
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: {
@@ -17,20 +22,22 @@ export class EquipmentRepository {
     serialNumber: string;
     status: EquipmentStatus;
     condition: string;
-    hallId: number;
+    hallId: string;
     notes?: string;
-    tenantId: number;
+    tenantId: string;
   }) {
-    return this.prisma.equipment.create({ data });
+    try {
+      return await this.prisma.equipment.create({ data });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException(`Equipment with serial number '${data.serialNumber}' already exists`);
+      }
+      throw error;
+    }
   }
 
-  async findAll(
-    tenantId: number,
-    skip: number,
-    take: number,
-    filters: FindAllFilters,
-  ) {
-    const where: any = { tenantId, deletedAt: null };
+  async findAll(tenantId: string, filters: FindAllFilters) {
+    const where: any = { tenantId, entityStatus: 'ACTIVE' };
 
     if (filters.status) {
       where.status = filters.status;
@@ -47,38 +54,38 @@ export class EquipmentRepository {
       ];
     }
 
-    const [data, total] = await Promise.all([
+    const [entities, totalCount] = await Promise.all([
       this.prisma.equipment.findMany({
         where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
+        skip: filters.pageNumber * filters.pageSize,
+        take: filters.pageSize,
+        orderBy: { created: 'desc' },
         include: { hall: true },
       }),
       this.prisma.equipment.count({ where }),
     ]);
 
-    return { data, total };
+    return { entities, totalCount };
   }
 
-  async findOne(id: number, tenantId: number) {
+  async findOne(id: string, tenantId: string) {
     return this.prisma.equipment.findFirst({
-      where: { id, tenantId, deletedAt: null },
+      where: { id, tenantId, entityStatus: 'ACTIVE' },
       include: { hall: true },
     });
   }
 
-  async update(id: number, tenantId: number, data: any) {
+  async update(id: string, tenantId: string, data: any) {
     return this.prisma.equipment.update({
       where: { id },
       data,
     });
   }
 
-  async softDelete(id: number, tenantId: number) {
+  async softDelete(id: string, tenantId: string) {
     return this.prisma.equipment.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: { entityStatus: 'DELETED' },
     });
   }
 }

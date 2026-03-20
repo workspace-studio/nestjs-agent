@@ -40,7 +40,7 @@ Never skip steps 5-10. If a step fails, fix the issue and re-run until green.
 
 ```bash
 # Infrastructure
-docker compose up -d              # Start PostgreSQL, Mailpit, Redis, MinIO
+docker compose up -d              # Start PostgreSQL, Mailpit
 docker compose down -v            # Shut down and remove volumes
 
 # Development
@@ -102,7 +102,6 @@ HTTP Request
   → Service (business logic, validation, exceptions)
   → Repository (Prisma queries)
   → PostgreSQL
-  → ResponseInterceptor (wrap in { success, data, meta })
 HTTP Response
 ```
 
@@ -116,8 +115,6 @@ src/modules/
 │   ├── prisma/                   # Database access (@Global)
 │   │   ├── prisma.service.ts     # extends PrismaClient
 │   │   └── prisma.module.ts
-│   ├── interceptors/
-│   │   └── response.interceptor.ts  # Standard response wrapper
 │   ├── filters/
 │   │   └── logging-exception.filter.ts  # Error logging + format
 │   ├── middleware/
@@ -135,7 +132,7 @@ src/modules/
 │   │   ├── roles.decorator.ts    # @Roles(Role.ADMIN)
 │   │   └── user.decorator.ts     # @User() — extract JWT payload
 │   └── enums/
-│       └── role.enum.ts          # ADMIN, OWNER, MANAGER, TECHNICIAN, USER
+│       └── role.enum.ts          # Project-specific roles
 ```
 
 ---
@@ -151,7 +148,6 @@ project-root/
 │       ├── common/                      # Cross-cutting concerns
 │       │   ├── config/
 │       │   ├── prisma/
-│       │   ├── interceptors/
 │       │   ├── filters/
 │       │   ├── middleware/
 │       │   └── dto/
@@ -205,7 +201,7 @@ Reference: `knowledge/01-code-style.md`
 | DTOs (create) | `Create{Name}Dto` | `CreateHallDto` |
 | DTOs (update) | `Update{Name}Dto` | `UpdateHallDto` |
 | Guards | `{Name}Guard` | `JwtAuthGuard`, `RolesGuard` |
-| Interceptors | `{Name}Interceptor` | `ResponseInterceptor` |
+| Interceptors | `{Name}Interceptor` | `LoggingInterceptor` |
 | Filters | `{Name}Filter` | `LoggingExceptionFilter` |
 | Decorators | camelCase function | `@Public()`, `@Roles()`, `@User()` |
 
@@ -233,12 +229,11 @@ Reference: `knowledge/03-prisma-migrations.md`, `knowledge/04-prisma-patterns.md
 
 ```typescript
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-  async onModuleInit() {
-    await this.$connect();
-  }
-  async onModuleDestroy() {
-    await this.$disconnect();
+export class PrismaService extends PrismaClient {
+  constructor() {
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
+    super({ adapter });
   }
 }
 ```
@@ -252,31 +247,31 @@ All Prisma queries go through a repository class — never call `prisma.*` direc
 export class HallsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: { name: string; maxCapacity: number; tenantId: number }) {
+  async create(data: { name: string; maxCapacity: number }) {
     return this.prisma.hall.create({ data });
   }
 
-  async findAll(tenantId: number, page: number, limit: number) {
-    const [items, total] = await Promise.all([
+  async findAll(tenantId: string, query: PaginationQueryDto) {
+    const [entities, totalCount] = await Promise.all([
       this.prisma.hall.findMany({
-        where: { tenantId, deletedAt: null },
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
+        where: { tenantId, entityStatus: 'ACTIVE' },
+        skip: query.pageNumber * query.pageSize,
+        take: query.pageSize,
+        orderBy: { created: 'desc' },
       }),
-      this.prisma.hall.count({ where: { tenantId, deletedAt: null } }),
+      this.prisma.hall.count({ where: { tenantId, entityStatus: 'ACTIVE' } }),
     ]);
-    return { items, total, page, limit };
+    return { entities, totalCount };
   }
 
-  async findOne(id: number, tenantId: number) {
-    return this.prisma.hall.findFirst({ where: { id, tenantId, deletedAt: null } });
+  async findOne(id: string, tenantId: string) {
+    return this.prisma.hall.findFirst({ where: { id, tenantId, entityStatus: 'ACTIVE' } });
   }
 
-  async softDelete(id: number, tenantId: number) {
+  async softDelete(id: string, tenantId: string) {
     await this.prisma.hall.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: { entityStatus: 'DELETED' },
     });
   }
 }
@@ -284,9 +279,9 @@ export class HallsRepository {
 
 ### Key Patterns
 
-- **Soft deletes**: Add `deletedAt DateTime?` to model, filter with `where: { deletedAt: null }`
-- **Audit columns**: `createdAt DateTime @default(now())`, `updatedAt DateTime @updatedAt`
-- **Pagination**: `skip: (page - 1) * limit, take: limit`
+- **Soft deletes**: Add `entityStatus EntityStatus @default(ACTIVE)` to model, filter with `where: { entityStatus: 'ACTIVE' }`, delete with `data: { entityStatus: 'DELETED' }`
+- **Audit columns**: `created DateTime @default(now())`, `modified DateTime @updatedAt`
+- **Pagination**: `skip: pageNumber * pageSize, take: pageSize` (0-based pageNumber)
 - **Transactions**: `prisma.$transaction(async (tx) => { ... })`
 - **Search**: `where: { name: { contains: query, mode: 'insensitive' } }`
 - **Relations**: `include: { hall: true }` or `select: { id: true, name: true }`
@@ -302,19 +297,19 @@ Reference: `knowledge/05-service-patterns.md`
 export class HallsService {
   constructor(private readonly hallsRepository: HallsRepository) {}
 
-  async create(dto: CreateHallDto, tenantId: number) {
+  async create(dto: CreateHallDto, tenantId: string) {
     const existing = await this.hallsRepository.findByName(dto.name, tenantId);
     if (existing) throw new ConflictException(`Hall '${dto.name}' already exists`);
     return this.hallsRepository.create({ ...dto, tenantId });
   }
 
-  async findOne(id: number, tenantId: number) {
+  async findOne(id: string, tenantId: string) {
     const hall = await this.hallsRepository.findOne(id, tenantId);
     if (!hall) throw new NotFoundException(`Hall #${id} not found`);
     return hall;
   }
 
-  async remove(id: number, tenantId: number) {
+  async remove(id: string, tenantId: string) {
     await this.findOne(id, tenantId); // Throws if not found
     await this.hallsRepository.softDelete(id, tenantId);
   }
@@ -351,19 +346,19 @@ export class HallsController {
   @Get()
   @ApiOperation({ summary: 'List all halls' })
   findAll(@Query() query: PaginationQueryDto, @User() user: JwtUser) {
-    return this.hallsService.findAll(user.tenantId, query.page, query.limit);
+    return this.hallsService.findAll(user.tenantId, query);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get hall by ID' })
-  findOne(@Param('id', ParseIntPipe) id: number, @User() user: JwtUser) {
+  findOne(@Param('id') id: string, @User() user: JwtUser) {
     return this.hallsService.findOne(id, user.tenantId);
   }
 
   @Patch(':id')
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Update hall' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateHallDto, @User() user: JwtUser) {
+  update(@Param('id') id: string, @Body() dto: UpdateHallDto, @User() user: JwtUser) {
     return this.hallsService.update(id, dto, user.tenantId);
   }
 
@@ -371,7 +366,7 @@ export class HallsController {
   @HttpCode(204)
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Delete hall' })
-  remove(@Param('id', ParseIntPipe) id: number, @User() user: JwtUser) {
+  remove(@Param('id') id: string, @User() user: JwtUser) {
     return this.hallsService.remove(id, user.tenantId);
   }
 }
@@ -428,12 +423,11 @@ export const User = createParamDecorator(
 
 ### Role Enum
 
+Define project-specific roles. Each project defines its own roles based on business requirements. Example with minimal roles:
+
 ```typescript
 export enum Role {
   ADMIN = 'ADMIN',
-  OWNER = 'OWNER',
-  MANAGER = 'MANAGER',
-  TECHNICIAN = 'TECHNICIAN',
   USER = 'USER',
 }
 ```
@@ -469,26 +463,6 @@ Reference: `knowledge/07-error-handling.md`
 
 ---
 
-## Response Interceptor
-
-Reference: `knowledge/16-interceptors-middleware.md`
-
-Wraps all successful responses:
-
-```json
-{
-  "success": true,
-  "data": { ... },
-  "meta": {
-    "page": 1,
-    "limit": 10,
-    "total": 42
-  }
-}
-```
-
----
-
 ## Swagger / OpenAPI
 
 Reference: `knowledge/02-swagger-openapi.md`
@@ -500,9 +474,9 @@ const config = new DocumentBuilder()
   .setTitle('API Documentation')
   .setDescription('REST API')
   .setVersion('1.0')
-  .addBearerAuth()
+  .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'bearerAuth')
   .build();
-SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+SwaggerModule.setup('swagger-ui', app, SwaggerModule.createDocument(app, config));
 ```
 
 ### DTO Decorators
@@ -563,7 +537,7 @@ Reference: `knowledge/14-docker-cicd-config.md`
 
 ### Docker Compose (Development)
 
-Services: PostgreSQL 17, Mailpit (email testing), Redis 7, MinIO (S3-compatible storage)
+Services: PostgreSQL 17, Mailpit (email testing)
 
 ### Dockerfile (Production)
 
@@ -701,7 +675,7 @@ npx prisma studio
 docker compose down -v
 \`\`\`
 
-App runs on **http://localhost:{port}**. Swagger at `/api/docs`.
+App runs on **http://localhost:{port}**. Swagger at `/swagger-ui/index.html`.
 
 ## Architecture
 
@@ -717,8 +691,8 @@ Source root: `src/modules/`
 
 - **Controller → Service → Repository → PrismaService** flow
 - **DTOs**: class-validator + class-transformer, PartialType for updates
-- **Soft deletes**: `deletedAt DateTime?` filter
-- **Response wrapper**: `{ success, data, meta }` via ResponseInterceptor
+- **Soft deletes**: `entityStatus EntityStatus @default(ACTIVE)` filter
+- **Audit columns**: `created DateTime @default(now())`, `modified DateTime @updatedAt`
 
 ### Security
 
@@ -829,7 +803,7 @@ After ALL code changes are complete and verified:
    - [ ] `npm run lint` passes
    - [ ] `npm run test` passes
    - [ ] `npm run test:e2e` passes
-   - [ ] Swagger docs render correctly at /api/docs
+   - [ ] Swagger docs render correctly at /swagger-ui/index.html
 
    🤖 Generated with [Claude Code](https://claude.com/claude-code)
    EOF
@@ -861,7 +835,7 @@ Read the relevant knowledge file before performing a task:
 | `13-email-and-notifications.md` | Nodemailer, push | Email/notifications |
 | `14-docker-cicd-config.md` | Docker, Dockerfile, CI/CD | Infrastructure |
 | `15-dependency-management.md` | npm, version upgrades | Dependencies |
-| `16-interceptors-middleware.md` | ResponseInterceptor, pipes | Middleware layer |
+| `16-interceptors-middleware.md` | Interceptors, pipes, middleware | Middleware layer |
 | `17-project-bootstrap.md` | New project from zero | New project |
 | `18-testing-patterns.md` | Unit tests, e2e, mocking | Testing (CRITICAL) |
 

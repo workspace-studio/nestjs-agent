@@ -7,11 +7,19 @@ import { HallsRepository } from './halls.repository';
 import { CreateHallDto } from './dto/create-hall.dto';
 import { UpdateHallDto } from './dto/update-hall.dto';
 
+interface PaginationQuery {
+  pageNumber: number;
+  pageSize: number;
+  sortBy?: string;
+  sortDirection?: 'ASC' | 'DESC';
+  search?: string;
+}
+
 @Injectable()
 export class HallsService {
   constructor(private readonly hallsRepository: HallsRepository) {}
 
-  async create(createHallDto: CreateHallDto, tenantId: number) {
+  async create(createHallDto: CreateHallDto, tenantId: string) {
     const existing = await this.hallsRepository.findByName(
       createHallDto.name,
       tenantId,
@@ -22,25 +30,22 @@ export class HallsService {
     return this.hallsRepository.create({ ...createHallDto, tenantId });
   }
 
-  async findAll(tenantId: number, page: number = 1, limit: number = 20) {
-    const skip = (page - 1) * limit;
-    const { data, total } = await this.hallsRepository.findAll(
+  async findAll(tenantId: string, query: PaginationQuery) {
+    const { entities, totalCount } = await this.hallsRepository.findAll(
       tenantId,
-      skip,
-      limit,
+      query,
     );
     return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+      entities,
+      totalCount,
+      pagination: {
+        pageNumber: query.pageNumber,
+        pageSize: query.pageSize,
       },
     };
   }
 
-  async findOne(id: number, tenantId: number) {
+  async findOne(id: string, tenantId: string) {
     const hall = await this.hallsRepository.findOne(id, tenantId);
     if (!hall) {
       throw new NotFoundException(`Hall with ID ${id} not found`);
@@ -48,12 +53,12 @@ export class HallsService {
     return hall;
   }
 
-  async update(id: number, updateHallDto: UpdateHallDto, tenantId: number) {
+  async update(id: string, updateHallDto: UpdateHallDto, tenantId: string) {
     await this.findOne(id, tenantId);
     return this.hallsRepository.update(id, tenantId, updateHallDto);
   }
 
-  async remove(id: number, tenantId: number) {
+  async remove(id: string, tenantId: string) {
     await this.findOne(id, tenantId);
     return this.hallsRepository.softDelete(id, tenantId);
   }

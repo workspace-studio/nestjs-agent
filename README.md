@@ -54,7 +54,7 @@ Once you have the agent installed (see section 3), simply tell it:
 
 ```
 Bootstrap a new NestJS project called "my-api" with Prisma, PostgreSQL,
-JWT auth (ADMIN and USER roles), Swagger at /api/docs, Docker Compose,
+JWT auth (ADMIN and USER roles), Swagger at /swagger-ui/index.html, Docker Compose,
 and a health endpoint.
 ```
 
@@ -255,7 +255,7 @@ Retry 3 times with 1s delay on failure. Include error handling and unit tests.
 
 ```
 Set up Docker for this project:
-- docker-compose.yml: PostgreSQL 17, Mailpit, Redis 7, MinIO
+- docker-compose.yml: PostgreSQL 17, Mailpit
 - Multi-stage production Dockerfile (Alpine, non-root user)
 - GitHub Actions CI/CD: lint → test → build → docker push
 - Health check endpoint at GET /api/health
@@ -278,7 +278,7 @@ Target 90%+ coverage for this module.
 Bootstrap a new NestJS project called "inventory-api":
 - PostgreSQL + Prisma ORM
 - JWT auth with ADMIN and USER roles
-- Swagger at /api/docs
+- Swagger at /swagger-ui/index.html
 - Docker Compose for dev infrastructure
 - Health endpoint
 - First module: products (name, sku unique, price, quantity, isActive)
@@ -306,16 +306,14 @@ src/
     │   ├── config/
     │   │   └── env.validation.ts          # Zod schema for env vars
     │   ├── prisma/
-    │   │   ├── prisma.service.ts          # PrismaClient wrapper (OnModuleInit)
+    │   │   ├── prisma.service.ts          # PrismaClient wrapper (adapter-pg)
     │   │   └── prisma.module.ts           # @Global module
-    │   ├── interceptors/
-    │   │   └── response.interceptor.ts    # Wraps: { success, data, meta }
     │   ├── filters/
     │   │   └── logging-exception.filter.ts # Error logging + standard format
     │   ├── middleware/
     │   │   └── http-logger.middleware.ts   # Request/response logging
     │   └── dto/
-    │       └── pagination-query.dto.ts    # page, limit query params
+    │       └── pagination-query.dto.ts    # pageNumber, pageSize query params
     │
     ├── auth/                              # Authentication & authorization
     │   ├── auth.module.ts
@@ -328,7 +326,7 @@ src/
     │   │   ├── roles.decorator.ts         # @Roles(Role.ADMIN)
     │   │   └── user.decorator.ts          # @User() — extract JWT payload
     │   └── enums/
-    │       └── role.enum.ts               # ADMIN, OWNER, MANAGER, TECHNICIAN, USER
+    │       └── role.enum.ts               # Project-specific roles
     │
     └── <domain>/                          # One per business domain
         ├── <domain>.module.ts             # Module definition
@@ -380,7 +378,7 @@ Each layer has a single responsibility. Controllers never touch Prisma directly.
 The fastest way to explore and test your API:
 
 1. Start the server: `npm run start:dev`
-2. Open: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+2. Open: [http://localhost:3000/swagger-ui/index.html](http://localhost:3000/swagger-ui/index.html)
 3. Click **Authorize** and paste your JWT token
 4. Expand any endpoint and click **Try it out**
 
@@ -401,21 +399,21 @@ curl -X POST http://localhost:3000/api/halls \
   -d '{"name":"Main Hall","maxCapacity":100}'
 
 # List (with pagination)
-curl "http://localhost:3000/api/halls?page=1&limit=10" \
+curl "http://localhost:3000/api/halls?pageNumber=0&pageSize=10" \
   -H "Authorization: Bearer $TOKEN"
 
 # Get by ID
-curl http://localhost:3000/api/halls/1 \
+curl http://localhost:3000/api/halls/clx1234567890 \
   -H "Authorization: Bearer $TOKEN"
 
 # Update
-curl -X PATCH http://localhost:3000/api/halls/1 \
+curl -X PATCH http://localhost:3000/api/halls/clx1234567890 \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name":"Updated Hall"}'
 
 # Delete
-curl -X DELETE http://localhost:3000/api/halls/1 \
+curl -X DELETE http://localhost:3000/api/halls/clx1234567890 \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -435,25 +433,27 @@ curl -X DELETE http://localhost:3000/api/halls/1 \
 
 ### Response Format
 
-All successful responses are wrapped by the ResponseInterceptor:
+Controllers return data directly — no response wrapper.
 
+**Single entity:**
+```json
+{ "id": "clx1234567890", "name": "Main Hall", "maxCapacity": 100 }
+```
+
+**List (Serwizz format):**
 ```json
 {
-  "success": true,
-  "data": { "id": 1, "name": "Main Hall", "maxCapacity": 100 },
-  "meta": { "page": 1, "limit": 10, "total": 42 }
+  "entities": [{ "id": "clx1234567890", "name": "Main Hall" }],
+  "totalCount": 42,
+  "pagination": { "pageNumber": 0, "pageSize": 10 }
 }
 ```
 
-The `meta` field appears only on paginated list endpoints. Single-entity responses include `success` and `data` only.
-
-Error responses follow a consistent format:
-
+**Error responses:**
 ```json
 {
-  "success": false,
   "statusCode": 404,
-  "message": "Hall with id 99 not found",
+  "message": "Hall with id clx1234567890 not found",
   "error": "Not Found"
 }
 ```
@@ -488,7 +488,6 @@ npm run test:e2e          # E2E tests (requires running database)
 | Controller | Each method delegates correctly, exceptions propagate |
 | Repository | Prisma methods called with correct args |
 | Guards | Allow/deny based on roles |
-| Interceptors | Response wrapping |
 
 ### E2E Coverage Per Endpoint
 
@@ -613,7 +612,7 @@ kill <PID>           # Kill it
 # Or change port in docker-compose.yml
 ```
 
-Common ports: 5432 (PostgreSQL), 6379 (Redis), 9000 (MinIO), 3000 (NestJS).
+Common ports: 5432 (PostgreSQL), 1025 (Mailpit SMTP), 8025 (Mailpit UI), 3000 (NestJS).
 
 ### Build fails
 
@@ -664,7 +663,7 @@ npx prisma migrate reset        # WARNING: drops all data and re-runs migrations
 ### Swagger not loading
 
 - Check `main.ts` has `SwaggerModule.setup()` configured
-- Verify the path: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+- Verify the path: [http://localhost:3000/swagger-ui/index.html](http://localhost:3000/swagger-ui/index.html)
 - Ensure the server is running (`npm run start:dev`)
 - Check for startup errors in the terminal
 
@@ -728,9 +727,6 @@ Repository                  ← Prisma queries, pagination, soft delete
 PostgreSQL                  ← Data storage
   │
   ▼
-ResponseInterceptor         ← Wrap: { success, data, meta }
-  │
-  ▼
 HTTP Response
 ```
 
@@ -739,7 +735,7 @@ HTTP Response
 - **Global prefix `/api`** -- all routes are prefixed, keeping the root path free for frontend serving.
 - **Global ValidationPipe** -- DTOs are validated automatically. Invalid requests never reach the service layer.
 - **Global guards** -- JWT and Roles guards are applied globally. Use `@Public()` to opt out of auth on specific endpoints.
-- **Response wrapping** -- the ResponseInterceptor ensures a consistent `{ success, data, meta }` envelope for all responses.
+- **No response wrapper** -- controllers return data directly. List endpoints use Serwizz format: `{ entities, totalCount, pagination }`.
 - **Repository pattern** -- Prisma queries are isolated in repository classes, making services testable without database access.
 
 ### Knowledge Files

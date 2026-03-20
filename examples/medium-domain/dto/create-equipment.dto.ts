@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
-  IsInt,
   IsEnum,
   IsOptional,
 } from 'class-validator';
@@ -48,9 +47,10 @@ export class CreateEquipmentDto {
   @IsEnum(EquipmentCondition)
   condition: EquipmentCondition;
 
-  @ApiProperty({ description: 'ID of the hall this equipment belongs to', example: 1 })
-  @IsInt()
-  hallId: number;
+  @ApiProperty({ description: 'ID of the hall this equipment belongs to', example: 'clx1234567890' })
+  @IsString()
+  @IsNotEmpty()
+  hallId: string;
 
   @ApiProperty({ description: 'Additional notes', required: false })
   @IsString()

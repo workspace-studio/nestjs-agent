@@ -11,7 +11,7 @@ describe('RolesGuard', () => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({
-          user: { id: 1, role: userRole, tenantId: 1 },
+          user: { id: 'user-1', role: userRole, tenantId: 'tenant-1' },
         }),
       }),
       getHandler: () => jest.fn(),

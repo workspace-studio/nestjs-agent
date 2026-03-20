@@ -18,15 +18,11 @@ npm install @nestjs/passport @nestjs/jwt passport passport-jwt bcrypt
 npm install -D @types/passport-jwt @types/bcrypt
 
 # Database
-npm install @prisma/client
-npm install -D prisma
+npm install @prisma/client @prisma/adapter-pg pg
+npm install -D prisma @types/pg
 
 # HTTP client
 npm install @nestjs/axios axios
-
-# S3
-npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner uuid
-npm install -D @types/uuid
 
 # Email
 npm install nodemailer
@@ -64,19 +60,24 @@ enum UserRole {
   EMPLOYEE
 }
 
+enum EntityStatus {
+  ACTIVE
+  DELETED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole @default(EMPLOYEE)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  password     String
+  role         UserRole     @default(EMPLOYEE)
+  isActive     Boolean      @default(true)
+  created      DateTime     @default(now())
+  modified     DateTime     @updatedAt
+  entityStatus EntityStatus @default(ACTIVE)
 
   @@index([email])
-  @@index([deletedAt])
+  @@index([entityStatus])
   @@map("users")
 }
 ```
@@ -110,7 +111,6 @@ src/common/
   filters/
     exception.filter.ts
   interceptors/
-    response.interceptor.ts
     timeout.interceptor.ts
   middleware/
     logging.middleware.ts
@@ -140,13 +140,18 @@ export class CommonModule {}
 ### prisma.service.ts
 
 ```typescript
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
-  async onModuleInit() { await this.$connect(); }
-  async onModuleDestroy() { await this.$disconnect(); }
+export class PrismaService extends PrismaClient {
+  constructor() {
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
+    super({ adapter });
+  }
 }
 ```
 
@@ -167,10 +172,6 @@ export class PrismaModule {}
 ### exception.filter.ts
 
 See `07-error-handling.md` for full implementation.
-
-### response.interceptor.ts
-
-See `16-interceptors-middleware.md` for full implementation.
 
 ### pagination.ts
 
@@ -214,7 +215,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 import { LoggingExceptionFilter } from './common/filters/exception.filter';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -232,12 +232,10 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
-      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
   app.useGlobalInterceptors(
-    new ResponseInterceptor(),
     new ClassSerializerInterceptor(app.get(Reflector)),
   );
 
@@ -246,17 +244,17 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('My App API')
     .setVersion('1.0')
-    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'bearerAuth')
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
+  SwaggerModule.setup('swagger-ui', app, document, {
     swaggerOptions: { persistAuthorization: true },
   });
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
   logger.log(`Application running on http://localhost:${port}`);
-  logger.log(`Swagger docs at http://localhost:${port}/api/docs`);
+  logger.log(`Swagger docs at http://localhost:${port}/swagger-ui/index.html`);
 }
 bootstrap();
 ```
@@ -354,5 +352,5 @@ npm run build
 npm run lint
 npm run test
 npm run start:dev
-# Visit http://localhost:3000/api/docs
+# Visit http://localhost:3000/swagger-ui/index.html
 ```

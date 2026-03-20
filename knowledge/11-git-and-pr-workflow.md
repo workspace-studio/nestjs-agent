@@ -111,7 +111,7 @@ gh pr create --reviewer <username> --title "Resolves #<task_number>: <task_title
 - [ ] `npm run lint` passes
 - [ ] `npm run test` passes
 - [ ] `npm run test:e2e` passes
-- [ ] Swagger docs render correctly at /api/docs
+- [ ] Swagger docs render correctly at /swagger-ui/index.html
 - [ ] CRUD operations verified via API
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)

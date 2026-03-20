@@ -13,8 +13,6 @@ import {
 } from '@nestjs/common';
 import { WorkOrderStatus } from '@prisma/client';
 
-import { buildPaginatedResult, PaginatedResult } from 'src/common/utils/pagination';
-
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { QueryWorkOrderDto } from './dto/query-work-order.dto';
 import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
@@ -53,20 +51,20 @@ export class WorkOrderService {
     return this.toResponseDto(workOrder);
   }
 
-  async findAll(query: QueryWorkOrderDto): Promise<PaginatedResult<WorkOrderResponseDto>> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
+  async findAll(query: QueryWorkOrderDto) {
+    const pageNumber = query.pageNumber ?? 0;
+    const pageSize = query.pageSize ?? 20;
 
-    const { data, total } = await this.workOrderRepository.findAll({
-      page,
-      limit,
+    const { entities, totalCount } = await this.workOrderRepository.findAll({
+      pageNumber,
+      pageSize,
       status: query.status,
       assigneeId: query.assigneeId,
       search: query.search,
     });
 
-    const items = data.map((wo) => this.toResponseDto(wo));
-    return buildPaginatedResult(items, total, { page, limit });
+    const items = entities.map((wo) => this.toResponseDto(wo));
+    return { entities: items, totalCount, pagination: { pageNumber, pageSize } };
   }
 
   async findOne(id: string): Promise<WorkOrderResponseDto> {
@@ -152,8 +150,8 @@ export class WorkOrderService {
       createdBy: workOrder.createdBy
         ? { id: workOrder.createdBy.id, name: workOrder.createdBy.name }
         : undefined,
-      createdAt: workOrder.createdAt,
-      updatedAt: workOrder.updatedAt,
+      created: workOrder.created,
+      modified: workOrder.modified,
     };
   }
 }
@@ -183,12 +181,10 @@ throw new ForbiddenException('You can only update your own work orders');
 ## Pagination Helper Usage
 
 ```typescript
-import { buildPaginatedResult } from 'src/common/utils/pagination';
-
 // In service:
-const { data, total } = await this.repository.findAll({ page, limit, ...filters });
-const dtos = data.map((item) => this.toResponseDto(item));
-return buildPaginatedResult(dtos, total, { page, limit });
+const { entities, totalCount } = await this.repository.findAll({ pageNumber, pageSize, ...filters });
+const dtos = entities.map((item) => this.toResponseDto(item));
+return { entities: dtos, totalCount, pagination: { pageNumber, pageSize } };
 ```
 
 ## Soft Delete Pattern
@@ -204,6 +200,8 @@ async remove(id: string): Promise<void> {
   await this.repository.softDelete(id);
 }
 ```
+
+The repository's `softDelete` sets `entityStatus: 'DELETED'` instead of actually deleting the record.
 
 ## When to Split Services
 

@@ -125,6 +125,15 @@ export class WorkOrderService {
 - One class per file.
 - File name must match the class name in kebab-case (e.g., `WorkOrderService` lives in `work-order.service.ts`).
 
+## Type Imports
+
+Use `import type` for interfaces and type-only imports that are not used at runtime:
+
+```typescript
+import type { JwtPayload } from '../interfaces/jwt-payload.interface';
+import type { PaginatedResult } from 'src/common/utils/pagination';
+```
+
 ## File Suffixes
 
 | Type         | Suffix              | Example                        |

@@ -75,23 +75,28 @@ enum Priority {
   CRITICAL
 }
 
+enum EntityStatus {
+  ACTIVE
+  DELETED
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      UserRole @default(EMPLOYEE)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id           String       @id @default(cuid())
+  email        String       @unique
+  name         String
+  password     String
+  role         UserRole     @default(EMPLOYEE)
+  isActive     Boolean      @default(true)
+  created      DateTime     @default(now())
+  modified     DateTime     @updatedAt
+  entityStatus EntityStatus @default(ACTIVE)
 
   assignedWorkOrders WorkOrder[] @relation("AssignedTo")
   createdWorkOrders  WorkOrder[] @relation("CreatedBy")
 
   @@index([email])
   @@index([role])
-  @@index([deletedAt])
+  @@index([entityStatus])
   @@map("users")
 }
 
@@ -114,14 +119,14 @@ model WorkOrder {
 
   tasks Task[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  created      DateTime     @default(now())
+  modified     DateTime     @updatedAt
+  entityStatus EntityStatus @default(ACTIVE)
 
   @@index([status])
   @@index([assigneeId])
   @@index([createdById])
-  @@index([deletedAt])
+  @@index([entityStatus])
   @@map("work_orders")
 }
 
@@ -133,8 +138,8 @@ model Task {
   workOrderId String
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  created  DateTime @default(now())
+  modified DateTime @updatedAt
 
   @@map("tasks")
 }
@@ -146,9 +151,9 @@ model Location {
 
   workOrders WorkOrder[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  created      DateTime     @default(now())
+  modified     DateTime     @updatedAt
+  entityStatus EntityStatus @default(ACTIVE)
 
   @@map("locations")
 }
@@ -159,16 +164,16 @@ model Location {
 ### Audit Columns (always include)
 
 ```prisma
-createdAt DateTime  @default(now())
-updatedAt DateTime  @updatedAt
+created  DateTime @default(now())
+modified DateTime @updatedAt
 ```
 
 ### Soft Delete
 
 ```prisma
-deletedAt DateTime?
+entityStatus EntityStatus @default(ACTIVE)
 
-@@index([deletedAt])
+@@index([entityStatus])
 ```
 
 ### Relations

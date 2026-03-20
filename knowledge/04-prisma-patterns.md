@@ -4,23 +4,17 @@
 
 ```typescript
 // src/common/prisma/prisma.service.ts
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService extends PrismaClient {
   constructor() {
-    super({
-      log: process.env.NODE_ENV === 'development' ? ['query', 'warn', 'error'] : ['warn', 'error'],
-    });
-  }
-
-  async onModuleInit() {
-    await this.$connect();
-  }
-
-  async onModuleDestroy() {
-    await this.$disconnect();
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg(pool);
+    super({ adapter });
   }
 }
 ```
@@ -61,14 +55,14 @@ export class WorkOrderRepository {
   }
 
   async findById(id: string): Promise<WorkOrder | null> {
-    return this.prisma.workOrder.findUnique({
-      where: { id, deletedAt: null },
+    return this.prisma.workOrder.findFirst({
+      where: { id, entityStatus: 'ACTIVE' },
     });
   }
 
   async findByIdWithRelations(id: string): Promise<WorkOrder | null> {
-    return this.prisma.workOrder.findUnique({
-      where: { id, deletedAt: null },
+    return this.prisma.workOrder.findFirst({
+      where: { id, entityStatus: 'ACTIVE' },
       include: {
         assignee: { select: { id: true, name: true, email: true } },
         createdBy: { select: { id: true, name: true, email: true } },
@@ -79,17 +73,17 @@ export class WorkOrderRepository {
   }
 
   async findAll(params: {
-    page: number;
-    limit: number;
+    pageNumber: number;
+    pageSize: number;
     status?: string;
     assigneeId?: string;
     search?: string;
-  }): Promise<{ data: WorkOrder[]; total: number }> {
-    const { page, limit, status, assigneeId, search } = params;
-    const skip = (page - 1) * limit;
+  }): Promise<{ entities: WorkOrder[]; totalCount: number }> {
+    const { pageNumber, pageSize, status, assigneeId, search } = params;
+    const skip = pageNumber * pageSize;
 
     const where: Prisma.WorkOrderWhereInput = {
-      deletedAt: null,
+      entityStatus: 'ACTIVE',
       ...(status && { status: status as any }),
       ...(assigneeId && { assigneeId }),
       ...(search && {
@@ -100,12 +94,12 @@ export class WorkOrderRepository {
       }),
     };
 
-    const [data, total] = await this.prisma.$transaction([
+    const [entities, totalCount] = await this.prisma.$transaction([
       this.prisma.workOrder.findMany({
         where,
         skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
+        take: pageSize,
+        orderBy: { created: 'desc' },
         include: {
           assignee: { select: { id: true, name: true } },
         },
@@ -113,7 +107,7 @@ export class WorkOrderRepository {
       this.prisma.workOrder.count({ where }),
     ]);
 
-    return { data, total };
+    return { entities, totalCount };
   }
 
   async update(id: string, data: Prisma.WorkOrderUpdateInput): Promise<WorkOrder> {
@@ -126,14 +120,14 @@ export class WorkOrderRepository {
   async softDelete(id: string): Promise<WorkOrder> {
     return this.prisma.workOrder.update({
       where: { id },
-      data: { deletedAt: new Date() },
+      data: { entityStatus: 'DELETED' },
     });
   }
 
   async findByAssignee(assigneeId: string): Promise<WorkOrder[]> {
     return this.prisma.workOrder.findMany({
-      where: { assigneeId, deletedAt: null },
-      orderBy: { createdAt: 'desc' },
+      where: { assigneeId, entityStatus: 'ACTIVE' },
+      orderBy: { created: 'desc' },
     });
   }
 
@@ -141,7 +135,7 @@ export class WorkOrderRepository {
     const count = await this.prisma.workOrder.count({
       where: {
         title,
-        deletedAt: null,
+        entityStatus: 'ACTIVE',
         ...(excludeId && { id: { not: excludeId } }),
       },
     });
@@ -152,14 +146,14 @@ export class WorkOrderRepository {
 
 ## Soft Delete Filter
 
-Always add `deletedAt: null` to where clauses:
+Always add `entityStatus: 'ACTIVE'` to where clauses:
 
 ```typescript
 // In repository queries
-where: { id, deletedAt: null }
+where: { id, entityStatus: 'ACTIVE' }
 
 // For findMany
-where: { deletedAt: null, ...otherFilters }
+where: { entityStatus: 'ACTIVE', ...otherFilters }
 ```
 
 ## Pagination Helper
@@ -167,35 +161,91 @@ where: { deletedAt: null, ...otherFilters }
 ```typescript
 // src/common/utils/pagination.ts
 export interface PaginationParams {
-  page: number;
-  limit: number;
+  pageNumber: number;
+  pageSize: number;
 }
 
 export interface PaginatedResult<T> {
-  data: T[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
+  entities: T[];
+  totalCount: number;
+  pagination: {
+    pageNumber: number;
+    pageSize: number;
   };
 }
 
-export function buildPaginatedResult<T>(data: T[], total: number, params: PaginationParams): PaginatedResult<T> {
-  const totalPages = Math.ceil(total / params.limit);
+export function buildPaginatedResult<T>(entities: T[], totalCount: number, params: PaginationParams): PaginatedResult<T> {
   return {
-    data,
-    meta: {
-      total,
-      page: params.page,
-      limit: params.limit,
-      totalPages,
-      hasNextPage: params.page < totalPages,
-      hasPreviousPage: params.page > 1,
+    entities,
+    totalCount,
+    pagination: {
+      pageNumber: params.pageNumber,
+      pageSize: params.pageSize,
     },
   };
+}
+```
+
+## findUnique vs findFirst
+
+- **findUnique()** — for lookup by unique field WITHOUT entityStatus filter (e.g., findByEmail, findBySerialNumber)
+- **findFirst()** — for lookup by ID or any field that requires entityStatus filter
+
+```typescript
+// findUnique: lookup by unique field, no entityStatus filter needed
+async findByEmail(email: string) {
+  return this.prisma.user.findUnique({ where: { email } });
+}
+
+// findFirst: lookup by ID with entityStatus filter
+async findById(id: string) {
+  return this.prisma.user.findFirst({
+    where: { id, entityStatus: 'ACTIVE' },
+  });
+}
+```
+
+## P2002 Error Handling (Unique Constraint Violation)
+
+```typescript
+import { ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+
+async create(data: Prisma.CourtCreateInput) {
+  try {
+    return await this.prisma.court.create({ data });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ConflictException(`Court '${data.name}' already exists`);
+    }
+    throw error;
+  }
+}
+```
+
+## ALLOWED_SORT_FIELDS Pattern
+
+Validate sort fields to prevent arbitrary column access:
+
+```typescript
+private readonly ALLOWED_SORT_FIELDS = ['name', 'created', 'modified'] as const;
+
+async findAll(query: PaginationQueryDto) {
+  if (!this.ALLOWED_SORT_FIELDS.includes(query.sortBy as any)) {
+    throw new BadRequestException(`Invalid sort field: ${query.sortBy}`);
+  }
+
+  const [entities, totalCount] = await Promise.all([
+    this.prisma.court.findMany({
+      where: { entityStatus: 'ACTIVE' },
+      skip: query.pageNumber * query.pageSize,
+      take: query.pageSize,
+      orderBy: { [query.sortBy]: query.sortDirection.toLowerCase() },
+    }),
+    this.prisma.court.count({ where: { entityStatus: 'ACTIVE' } }),
+  ]);
+
+  return { entities, totalCount };
 }
 ```
 
