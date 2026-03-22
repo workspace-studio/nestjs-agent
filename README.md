@@ -113,7 +113,9 @@ If you prefer full control over what gets installed:
 git clone https://github.com/workspace-studio/nestjs-agent.git /tmp/nestjs-agent
 cd /path/to/your-nestjs-project
 mkdir -p .claude/{agents,knowledge,examples}
-cp /tmp/nestjs-agent/agents/nestjs.md .claude/agents/
+mkdir -p .claude/skills/{scaffold,bootstrap,fix-issue,add-field,write-tests,create-pr}
+cp /tmp/nestjs-agent/agents/*.md .claude/agents/
+for s in /tmp/nestjs-agent/skills/*/; do cp "$s"SKILL.md ".claude/skills/$(basename $s)/"; done
 cp /tmp/nestjs-agent/knowledge/*.md .claude/knowledge/
 cp -r /tmp/nestjs-agent/examples/* .claude/examples/
 ```
@@ -122,35 +124,36 @@ cp -r /tmp/nestjs-agent/examples/* .claude/examples/
 
 ```
 your-project/
+├── CLAUDE.md                           # Project-specific context (auto-generated)
 └── .claude/
     ├── agents/
-    │   └── nestjs.md                 # Agent definition (~600 lines)
-    ├── knowledge/                    # 18 topic reference files
-    │   ├── 01-code-style.md
-    │   ├── 02-swagger-openapi.md
-    │   ├── 03-prisma-migrations.md
-    │   ├── 04-prisma-patterns.md
-    │   ├── 05-service-patterns.md
-    │   ├── 06-controller-security.md
-    │   ├── 07-error-handling.md
-    │   ├── 08-external-api-integration.md
-    │   ├── 09-module-organization.md
-    │   ├── 10-domain-scaffold.md
-    │   ├── 11-git-and-pr-workflow.md
-    │   ├── 12-media-and-s3.md
-    │   ├── 13-email-and-notifications.md
-    │   ├── 14-docker-cicd-config.md
-    │   ├── 15-dependency-management.md
-    │   ├── 16-interceptors-middleware.md
-    │   ├── 17-project-bootstrap.md
-    │   └── 18-testing-patterns.md
-    └── examples/                     # Reference code examples
-        ├── simple-domain/            # Halls module (basic CRUD)
-        ├── medium-domain/            # Equipment module (FK, enums)
-        └── tests/                    # Unit + E2E test examples
+    │   ├── nestjs.md                   # Main agent (~200 lines)
+    │   ├── test-writer.md              # Subagent: writes tests
+    │   └── code-reviewer.md            # Subagent: reviews code
+    ├── skills/
+    │   ├── scaffold/SKILL.md           # /scaffold — new domain module
+    │   ├── bootstrap/SKILL.md          # /bootstrap — new project from zero
+    │   ├── fix-issue/SKILL.md          # /fix-issue — fix a GitHub issue
+    │   ├── add-field/SKILL.md          # /add-field — add field to model
+    │   ├── write-tests/SKILL.md        # /write-tests — generate tests
+    │   ├── create-pr/SKILL.md          # /create-pr — git + PR workflow
+    │   └── refactor/SKILL.md           # /refactor — safe code refactoring
+    ├── knowledge/                      # 18 topic reference files
+    │   └── 01 through 18-*.md
+    ├── examples/                       # Reference code examples
+    │   ├── simple-domain/              # Halls module (basic CRUD)
+    │   ├── medium-domain/              # Equipment module (FK, enums)
+    │   └── tests/                      # Unit + E2E test examples
+    └── settings.json                   # Hooks (auto-lint, pre-commit validation)
 ```
 
-The **agent definition** (`nestjs.md`) is the brain -- it contains instructions, decision logic, and references to the knowledge files and examples. The **knowledge files** are topic-specific references the agent consults depending on the task. The **examples** are real, working code the agent uses as templates.
+**Architecture:**
+- **Agent** (`nestjs.md`) — concise core instructions loaded every session (~200 lines)
+- **Skills** — on-demand workflows loaded only when invoked (e.g., `/scaffold`)
+- **Subagents** — isolated specialists that run in their own context (testing, code review)
+- **Knowledge** — deep reference files loaded on-demand via `@` imports
+- **Examples** — working code templates the agent uses as patterns
+- **Hooks** — automatic lint-on-edit and pre-commit validation
 
 ### Version Control Your Agent
 
@@ -189,11 +192,23 @@ The agent automatically:
 - Fixes any failures until green
 - Updates your project's CLAUDE.md
 
+### Skills (Slash Commands)
+
+| Command | What it does |
+|---------|-------------|
+| `/scaffold courts — name, address, capacity` | Create a complete new domain module |
+| `/bootstrap my-api — inventory system` | Bootstrap a new NestJS project from scratch |
+| `/fix-issue 42` | Read, analyze, fix a GitHub issue, create PR |
+| `/add-field Court — capacity Int required` | Add a field to an existing model end-to-end |
+| `/write-tests courts` | Generate unit + e2e tests for a module |
+| `/create-pr` | Create branch, commit, push, open PR |
+| `/refactor` | Refactor code safely while keeping all tests green |
+
 ### Tips for Best Results
 
+- **Use skills for common workflows.** `/scaffold` is faster and more consistent than describing the steps manually.
 - **Be specific.** Instead of "add a module", say "Create a 'categories' module with name (string, required, unique), description (optional). CRUD endpoints. ADMIN-only writes."
 - **Mention roles.** Tell the agent which roles can access what: "All authenticated users can read. Only ADMIN can create/update/delete."
-- **Mention tests.** Say "Include unit tests and e2e tests" if you want them (the agent will write them by default, but being explicit helps).
 - **Reference existing modules.** "Follow the same pattern as the halls module" helps the agent stay consistent.
 - **One task at a time.** The agent works best when focused on a single, well-defined task.
 
@@ -306,7 +321,7 @@ src/
     │   ├── config/
     │   │   └── env.validation.ts          # Zod schema for env vars
     │   ├── prisma/
-    │   │   ├── prisma.service.ts          # PrismaClient wrapper (adapter-pg)
+    │   │   ├── prisma.service.ts          # Prisma 7 adapter-pg
     │   │   └── prisma.module.ts           # @Global module
     │   ├── filters/
     │   │   └── logging-exception.filter.ts # Error logging + standard format

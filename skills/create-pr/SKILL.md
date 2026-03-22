@@ -1,0 +1,99 @@
+---
+name: create-pr
+description: Create a feature branch, commit changes, push, and open a GitHub pull request
+disable-model-invocation: true
+---
+
+# Create Pull Request
+
+Git workflow and PR creation. Usage: `/create-pr`
+
+## Steps
+
+### Step 1: Verify Changes
+
+```bash
+git status
+git diff --stat
+```
+
+Ensure all changes are intentional. Do NOT commit `.env`, credentials, or build artifacts.
+
+### Step 2: Create Branch
+
+```bash
+git checkout -b {type}/{descriptive-name}
+```
+
+Branch naming:
+- `feature/` — new functionality
+- `fix/` — bug fix
+- `refactor/` — code restructuring
+- `chore/` — maintenance, deps, config
+- `test/` — test additions only
+
+### Step 3: Update CLAUDE.md
+
+If structural changes were made (new module, new migration, new infrastructure):
+1. READ current CLAUDE.md
+2. EDIT only affected sections (folder structure, module list, commands)
+3. Keep it concise — factual entries only
+
+### Step 4: Stage Files
+
+Stage specific files (NEVER use `git add -A` or `git add .`):
+
+```bash
+git add src/ prisma/ test/ CLAUDE.md
+```
+
+### Step 5: Commit
+
+```bash
+git commit -m "$(cat <<'EOF'
+{type}: {concise description}
+
+Co-Authored-By: NestJS Agent <noreply@anthropic.com>
+EOF
+)"
+```
+
+Commit types: `feat`, `fix`, `refactor`, `chore`, `test`, `docs`
+
+### Step 6: Push
+
+```bash
+git push -u origin {branch-name}
+```
+
+### Step 7: Create PR
+
+**ASK the user**: "Who should review this PR? (GitHub username)"
+
+Wait for the user's response, then:
+
+```bash
+gh pr create --reviewer {username} --title "Resolves #{task_number}: {task_title}" --body "$(cat <<'EOF'
+## Summary
+- {bullet points of changes}
+
+## Test plan
+- [ ] `npm run build` passes
+- [ ] `npm run lint` passes
+- [ ] `npm run test` passes
+- [ ] `npm run test:e2e` passes
+- [ ] Swagger docs render correctly at /swagger-ui/index.html
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+## Rules
+
+- NEVER push to main directly
+- NEVER force push
+- NEVER use `git add -A` or `git add .`
+- NEVER skip hooks (`--no-verify`)
+- NEVER commit .env, credentials, or build artifacts
+- One logical change per commit

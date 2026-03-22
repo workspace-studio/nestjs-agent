@@ -1,0 +1,68 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+{PROJECT_NAME} — a NestJS + TypeScript backend. Prisma ORM, PostgreSQL, JWT authentication.
+
+## Build & Run Commands
+
+```bash
+# Infrastructure
+docker compose up -d              # Start PostgreSQL, Mailpit
+docker compose down -v            # Shut down and remove volumes
+
+# Development
+npm run start:dev                 # Start dev server (watch mode)
+npm run build                     # Compile TypeScript
+
+# Database
+npx prisma migrate dev            # Create and apply migration
+npx prisma generate               # Regenerate Prisma Client
+npx prisma studio                 # Open DB browser (localhost:5555)
+
+# Testing
+npm run test                      # Run unit tests
+npm run test:e2e                  # Run e2e tests
+npm run test:cov                  # Coverage report
+
+# Code Quality
+npm run lint                      # ESLint check
+npm run format                    # Prettier format
+```
+
+App runs on **http://localhost:3000**. Swagger at `/swagger-ui/index.html`.
+
+## Architecture
+
+### Module-Per-Domain
+
+Source root: `src/modules/`
+
+- **`common/`** — Cross-cutting: Prisma, config, filters, middleware
+- **`auth/`** — JWT auth, guards, decorators
+
+### Key Patterns
+
+- **Controller -> Service -> Repository -> PrismaService** flow
+- **DTOs**: class-validator + class-transformer, PartialType for updates
+- **Soft deletes**: `entityStatus` field (ACTIVE/DELETED)
+- **Pagination**: Serwizz format `{ entities, totalCount, pagination: { pageNumber, pageSize } }`
+- **Timestamps**: `created` / `modified` fields
+- **IDs**: String CUID (`@id @default(cuid())`)
+
+### Security
+
+JWT (Bearer token) stateless auth. Role-based access via `@Roles()` decorator + RolesGuard.
+
+### Database
+
+PostgreSQL. Prisma ORM with adapter-pg pattern. Migrations in `prisma/migrations/`.
+
+## Code Style
+
+- ESLint + Prettier enforced
+- Use `import type` for type-only imports
+- Always `readonly` for injected dependencies
+- No default exports — always named exports
