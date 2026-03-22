@@ -117,6 +117,7 @@ HTTP Request → ValidationPipe → JwtAuthGuard → RolesGuard → Controller �
 - **PrismaService**: Prisma 7 adapter-pg pattern with `Pool` and `PrismaPg`
 - **Import type**: Use `import type` for interfaces and type-only imports
 - **No response wrapper**: Controllers return data directly — no `{ success, data, meta }` pattern
+- **STRICT TYPING**: NEVER use `any`, `unknown`, or untyped objects. Always define proper interfaces or types. Use Prisma generated types, DTOs, or custom interfaces. If a type is needed, create it.
 
 ### Standard Exceptions
 
