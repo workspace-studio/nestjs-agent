@@ -125,7 +125,7 @@ Add the new module to the project's FOLDER-STRUCTURE.md folder tree and module d
 
 Use `/create-pr` skill or manually:
 ```bash
-git checkout -b feature/add-{domain}-domain
+git checkout -b {issue_number}-add-{domain}-domain
 git add src/ prisma/ test/ CLAUDE.md FOLDER-STRUCTURE.md
-git commit -m "feat: add {domain} domain with CRUD operations"
+git commit -m "#{issue_number}: add {domain} domain with CRUD operations"
 ```

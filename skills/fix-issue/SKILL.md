@@ -67,12 +67,10 @@ Fix any failures and re-run until all green.
 Use `/create-pr` skill or:
 
 ```bash
-git checkout -b fix/issue-{number}-{brief-description}
+git checkout -b {number}-{brief-description}
 git add src/ prisma/ test/
-git commit -m "fix: {description of fix}
-
-Resolves #{number}"
-git push -u origin fix/issue-{number}-{brief-description}
+git commit -m "#{number}: {description of fix}"
+git push -u origin {number}-{brief-description}
 gh pr create --title "Resolves #{number}: {issue title}" --body "$(cat <<'EOF'
 ## Summary
 - Root cause: {explanation}

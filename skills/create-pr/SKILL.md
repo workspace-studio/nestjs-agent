@@ -22,15 +22,12 @@ Ensure all changes are intentional. Do NOT commit `.env`, credentials, or build 
 ### Step 2: Create Branch
 
 ```bash
-git checkout -b {type}/{descriptive-name}
+git checkout -b {issue_number}-{descriptive-name}
 ```
 
-Branch naming:
-- `feature/` — new functionality
-- `fix/` — bug fix
-- `refactor/` — code restructuring
-- `chore/` — maintenance, deps, config
-- `test/` — test additions only
+No prefixes like `feature/`, `fix/`, etc. — just the issue number and a descriptive name.
+
+Example: `11-add-equipment-domain`, `23-fix-work-order-validation`
 
 ### Step 3: Update CLAUDE.md & FOLDER-STRUCTURE.md
 

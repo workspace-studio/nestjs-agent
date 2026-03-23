@@ -2,22 +2,17 @@
 
 ## Branch Naming
 
-```
-feature/<short-description>    # New features
-fix/<short-description>        # Bug fixes
-chore/<short-description>      # Maintenance, deps, config
-docs/<short-description>       # Documentation only
-refactor/<short-description>   # Code restructuring
-test/<short-description>       # Adding/fixing tests
-```
+Format: `{issue_number}-{short-description}`
+
+No prefixes like `feature/`, `fix/`, `chore/`, etc. — just the issue number and a descriptive name.
 
 Examples:
 
 ```bash
-git checkout -b feature/add-equipment-domain
-git checkout -b fix/work-order-status-validation
-git checkout -b chore/upgrade-nestjs-11
-git checkout -b refactor/extract-pagination-util
+git checkout -b 11-add-equipment-domain
+git checkout -b 23-fix-work-order-status-validation
+git checkout -b 45-upgrade-nestjs-11
+git checkout -b 32-extract-pagination-util
 ```
 
 ## Commit Message Format
@@ -87,7 +82,7 @@ npm run build && npm run lint && npm run test && npm run test:e2e
 
 ```bash
 # Push branch
-git push -u origin feature/add-equipment-domain
+git push -u origin 11-add-equipment-domain
 
 # Create PR with gh CLI (use the reviewer username provided by the user)
 gh pr create --reviewer <username> --title "Resolves #<task_number>: <task_title>" --body "$(cat <<'EOF'
@@ -118,10 +113,10 @@ git checkout main
 git pull
 
 # Delete local branch
-git branch -d feature/add-equipment-domain
+git branch -d 11-add-equipment-domain
 
 # Delete remote branch (if not auto-deleted)
-git push origin --delete feature/add-equipment-domain
+git push origin --delete 11-add-equipment-domain
 ```
 
 ## Handling Failed Pre-commit Hooks
