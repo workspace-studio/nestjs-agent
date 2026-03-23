@@ -136,9 +136,9 @@ See `@knowledge/06-controller-security.md` for all auth code.
 // See @knowledge/16-interceptors-middleware.md
 ```
 
-### Step 9: Create CLAUDE.md
+### Step 9: Create CLAUDE.md & FOLDER-STRUCTURE.md
 
-Scan the project and generate CLAUDE.md at project root:
+Scan the project and generate both files at project root:
 
 1. READ package.json → name, version, Node engine, NestJS version
 2. READ prisma/schema.prisma → models, enums
@@ -146,7 +146,7 @@ Scan the project and generate CLAUDE.md at project root:
 4. GLOB src/modules/*/ → list all modules
 5. READ src/main.ts → global prefix, pipes, swagger config
 
-Generate CLAUDE.md from `@templates/CLAUDE.md.template`, filling in project-specific details.
+Generate CLAUDE.md from `@templates/CLAUDE.md.template` and FOLDER-STRUCTURE.md from `@templates/FOLDER-STRUCTURE.md.template`, filling in project-specific details.
 
 ### Step 10: Seed Data
 

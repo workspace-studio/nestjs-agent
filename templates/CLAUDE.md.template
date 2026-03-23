@@ -60,6 +60,10 @@ JWT (Bearer token) stateless auth. Role-based access via `@Roles()` decorator + 
 
 PostgreSQL. Prisma ORM with adapter-pg pattern. Migrations in `prisma/migrations/`.
 
+## Folder Structure
+
+@FOLDER-STRUCTURE.md
+
 ## Code Style
 
 - ESLint + Prettier enforced

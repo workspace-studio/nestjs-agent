@@ -32,19 +32,20 @@ Branch naming:
 - `chore/` — maintenance, deps, config
 - `test/` — test additions only
 
-### Step 3: Update CLAUDE.md
+### Step 3: Update CLAUDE.md & FOLDER-STRUCTURE.md
 
 If structural changes were made (new module, new migration, new infrastructure):
-1. READ current CLAUDE.md
-2. EDIT only affected sections (folder structure, module list, commands)
-3. Keep it concise — factual entries only
+1. READ current CLAUDE.md and FOLDER-STRUCTURE.md
+2. Folder tree changes → FOLDER-STRUCTURE.md
+3. Other changes (commands, module descriptions) → CLAUDE.md
+4. Keep it concise — factual entries only
 
 ### Step 4: Stage Files
 
 Stage specific files (NEVER use `git add -A` or `git add .`):
 
 ```bash
-git add src/ prisma/ test/ CLAUDE.md
+git add src/ prisma/ test/ CLAUDE.md FOLDER-STRUCTURE.md
 ```
 
 ### Step 5: Commit

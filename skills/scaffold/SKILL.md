@@ -117,15 +117,15 @@ npm run test:e2e       # Must pass e2e tests
 
 Fix any failures and re-run until all green.
 
-### Step 8: Update CLAUDE.md
+### Step 8: Update FOLDER-STRUCTURE.md & CLAUDE.md
 
-Add the new module to the project's CLAUDE.md folder structure and module list.
+Add the new module to the project's FOLDER-STRUCTURE.md folder tree and module description in CLAUDE.md.
 
 ### Step 9: Commit & PR
 
 Use `/create-pr` skill or manually:
 ```bash
 git checkout -b feature/add-{domain}-domain
-git add src/ prisma/ test/ CLAUDE.md
+git add src/ prisma/ test/ CLAUDE.md FOLDER-STRUCTURE.md
 git commit -m "feat: add {domain} domain with CRUD operations"
 ```

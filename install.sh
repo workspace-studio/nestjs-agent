@@ -76,6 +76,11 @@ if [ ! -f "CLAUDE.md" ]; then
     sed "s/{PROJECT_NAME}/$PROJECT_NAME/g" "$SOURCE_DIR/templates/CLAUDE.md.template" > CLAUDE.md
 fi
 
+# --- Install FOLDER-STRUCTURE.md from template (only if not exists) ---
+if [ ! -f "FOLDER-STRUCTURE.md" ]; then
+    cp "$SOURCE_DIR/templates/FOLDER-STRUCTURE.md.template" FOLDER-STRUCTURE.md
+fi
+
 # --- Summary ---
 echo ""
 echo "=== NestJS Agent Installed ==="
@@ -84,7 +89,8 @@ echo "  Skills:    $(find .claude/skills -name 'SKILL.md' 2>/dev/null | wc -l | 
 echo "  Knowledge: $(ls .claude/knowledge/*.md 2>/dev/null | wc -l | tr -d ' ') files"
 echo "  Examples:  $(find .claude/examples -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ') directories"
 echo "  Hooks:     $([ -f .claude/settings.json ] && echo 'yes' || echo 'no')"
-echo "  CLAUDE.md: $([ -f CLAUDE.md ] && echo 'present' || echo 'skipped')"
+echo "  CLAUDE.md:           $([ -f CLAUDE.md ] && echo 'present' || echo 'skipped')"
+echo "  FOLDER-STRUCTURE.md: $([ -f FOLDER-STRUCTURE.md ] && echo 'present' || echo 'skipped')"
 echo ""
 echo "  Skills:  /scaffold  /bootstrap  /fix-issue  /add-field  /write-tests  /create-pr  /refactor"
 echo ""

@@ -162,17 +162,19 @@ Lint:        Pass / Fail
 
 ---
 
-## CLAUDE.md Maintenance
+## CLAUDE.md & FOLDER-STRUCTURE.md Maintenance
 
-**Update CLAUDE.md IF** structural changes were made:
-- New module → add to folder structure + module list
-- New migration → note in database section
-- New infrastructure → update commands
-- Version upgrade → update overview
+**FOLDER-STRUCTURE.md** holds the project folder tree. CLAUDE.md references it via `@FOLDER-STRUCTURE.md`. This keeps CLAUDE.md compact as the project grows.
+
+**Update IF** structural changes were made:
+- New module → add to FOLDER-STRUCTURE.md tree + module description in CLAUDE.md
+- New migration → note in CLAUDE.md database section
+- New infrastructure → update CLAUDE.md commands
+- Version upgrade → update CLAUDE.md overview
 
 READ → EDIT affected sections only → keep concise. Never bloat with implementation details.
 
-If CLAUDE.md does not exist, use `/bootstrap` skill or create from `@templates/CLAUDE.md.template`.
+If CLAUDE.md does not exist, use `/bootstrap` skill or create from `@templates/CLAUDE.md.template` + `@templates/FOLDER-STRUCTURE.md.template`.
 
 ---
 
