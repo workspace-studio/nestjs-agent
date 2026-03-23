@@ -38,6 +38,9 @@ npm install -D @types/nodemailer
 
 # Testing extras
 npm install -D supertest @types/supertest
+
+# Path alias (rewrites src/ imports in compiled JS)
+npm install -D tsc-alias
 ```
 
 ### Step 3: Initialize Prisma
@@ -69,6 +72,25 @@ model User {
   @@index([entityStatus])
   @@map("users")
 }
+```
+
+### Step 3b: Configure Path Alias
+
+Add `paths` to `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": { "src/*": ["src/*"] }
+  }
+}
+```
+
+Update `package.json` build script:
+
+```json
+{ "scripts": { "build": "nest build && tsc-alias" } }
 ```
 
 ### Step 4: Docker Compose

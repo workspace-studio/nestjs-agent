@@ -185,9 +185,9 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { User } from 'src/auth/decorators/user.decorator';
-import { Role } from 'src/auth/enums/role.enum';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { User } from 'src/modules/auth/decorators/user.decorator';
+import { Role } from 'src/modules/auth/enums/role.enum';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -264,8 +264,8 @@ For repeated decorator stacks, use `applyDecorators`:
 import { applyDecorators } from '@nestjs/common';
 import { ApiBearerAuth, ApiUnauthorizedResponse, ApiForbiddenResponse } from '@nestjs/swagger';
 
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/auth/enums/role.enum';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { Role } from 'src/modules/auth/enums/role.enum';
 
 export function AdminOnly() {
   return applyDecorators(

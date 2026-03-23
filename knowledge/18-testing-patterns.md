@@ -56,7 +56,7 @@
 ## A) Service Unit Test
 
 ```typescript
-// src/domains/equipment/equipment.service.spec.ts
+// src/modules/equipment/equipment.service.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { EquipmentStatus } from '@prisma/client';
@@ -209,7 +209,7 @@ describe('EquipmentService', () => {
 ## B) Controller Unit Test
 
 ```typescript
-// src/domains/equipment/equipment.controller.spec.ts
+// src/modules/equipment/equipment.controller.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 
@@ -315,10 +315,10 @@ describe('EquipmentController', () => {
 ## C) Repository Unit Test
 
 ```typescript
-// src/domains/equipment/equipment.repository.spec.ts
+// src/modules/equipment/equipment.repository.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { EquipmentRepository } from './equipment.repository';
 
@@ -653,9 +653,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { JwtService } from '@nestjs/jwt';
 
-import { AppModule } from 'src/app.module';
-import { PrismaService } from 'src/common/prisma/prisma.service';
-import { Role } from 'src/auth/enums/role.enum';
+import { AppModule } from 'src/modules/app.module';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { Role } from 'src/modules/auth/enums/role.enum';
 
 describe('Equipment (e2e)', () => {
   let app: INestApplication;
@@ -838,8 +838,8 @@ describe('Equipment (e2e)', () => {
 
 ```typescript
 // test/utils/test-helpers.ts
-import { Role } from 'src/auth/enums/role.enum';
-import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
+import { Role } from 'src/modules/auth/enums/role.enum';
+import { JwtPayload } from 'src/modules/auth/interfaces/jwt-payload.interface';
 
 /**
  * Create a mock user payload for testing
@@ -941,7 +941,7 @@ export function createMockCallHandler(returnValue: any) {
 2. **Never skip tests** — no `xit`, `xdescribe`, or `.skip`. Fix or delete them.
 3. **80% coverage target** — run `npm run test:cov` to verify.
 4. **Test file placement**:
-   - Unit tests: `src/domains/<name>/__tests__/<name>.service.spec.ts` or colocated as `<name>.service.spec.ts`
+   - Unit tests: `src/modules/<name>/__tests__/<name>.service.spec.ts` or colocated as `<name>.service.spec.ts`
    - E2E tests: `test/<name>.e2e-spec.ts`
 5. **Mock at boundaries** — mock repositories in service tests, mock services in controller tests. Never mock the class under test.
 6. **Test both success and failure paths** — every service method should have at least one success test and one failure test.

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { HallsRepository } from '../../simple-domain/halls.repository';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { HallsRepository } from 'src/modules/simple-domain/halls.repository';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 describe('HallsRepository', () => {
   let repository: HallsRepository;

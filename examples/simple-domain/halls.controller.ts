@@ -14,10 +14,10 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { HallsService } from './halls.service';
 import { CreateHallDto } from './dto/create-hall.dto';
 import { UpdateHallDto } from './dto/update-hall.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { User } from '../../common/decorators/user.decorator';
-import { Role } from '../../common/enums/role.enum';
-import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { Roles } from 'src/modules/common/decorators/roles.decorator';
+import { User } from 'src/modules/common/decorators/user.decorator';
+import { Role } from 'src/modules/common/enums/role.enum';
+import { PaginationQueryDto } from 'src/modules/common/dto/pagination-query.dto';
 
 @ApiTags('Halls')
 @Controller('halls')

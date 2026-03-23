@@ -3,7 +3,7 @@
 ## Standard Service
 
 ```typescript
-// src/domains/work-order/work-order.service.ts
+// src/modules/work-order/work-order.service.ts
 import {
   BadRequestException,
   ConflictException,

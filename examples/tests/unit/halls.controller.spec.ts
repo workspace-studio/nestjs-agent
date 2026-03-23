@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { HallsController } from '../../simple-domain/halls.controller';
-import { HallsService } from '../../simple-domain/halls.service';
+import { HallsController } from 'src/modules/simple-domain/halls.controller';
+import { HallsService } from 'src/modules/simple-domain/halls.service';
 
 describe('HallsController', () => {
   let controller: HallsController;

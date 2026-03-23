@@ -245,8 +245,8 @@ jobs:
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 
-import { Public } from 'src/auth/decorators/public.decorator';
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { Public } from 'src/modules/auth/decorators/public.decorator';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 @ApiTags('Health')
 @Controller('health')

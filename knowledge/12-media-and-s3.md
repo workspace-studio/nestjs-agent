@@ -159,11 +159,11 @@ Example: uploads/a1b2c3d4-e5f6-7890-abcd-ef1234567890.pdf
 ## MediaService
 
 ```typescript
-// src/domains/media/media.service.ts
+// src/modules/media/media.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { PrismaService } from 'src/common/prisma/prisma.service';
-import { S3Service } from 'src/common/s3/s3.service';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
+import { S3Service } from 'src/modules/common/s3/s3.service';
 
 @Injectable()
 export class MediaService {

@@ -6,7 +6,7 @@ import {
 import { EquipmentRepository } from './equipment.repository';
 import { CreateEquipmentDto, EquipmentStatus } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
-import { HallsRepository } from '../simple-domain/halls.repository';
+import { HallsRepository } from 'src/modules/simple-domain/halls.repository';
 
 interface FindAllOptions {
   pageNumber: number;

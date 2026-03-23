@@ -1,7 +1,7 @@
 import { Reflector } from '@nestjs/core';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
-import { RolesGuard } from '../../../common/guards/roles.guard';
-import { Role } from '../../../common/enums/role.enum';
+import { RolesGuard } from 'src/modules/common/guards/roles.guard';
+import { Role } from 'src/modules/common/enums/role.enum';
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;

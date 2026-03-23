@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 import { EquipmentStatus } from './dto/create-equipment.dto';
 
 interface FindAllFilters {

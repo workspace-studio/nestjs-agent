@@ -1,7 +1,7 @@
 import { applyDecorators, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { Roles } from '../../../common/decorators/roles.decorator';
-import { Role } from '../../../common/enums/role.enum';
+import { Roles } from 'src/modules/common/decorators/roles.decorator';
+import { Role } from 'src/modules/common/enums/role.enum';
 
 export function CreateHallApi() {
   return applyDecorators(

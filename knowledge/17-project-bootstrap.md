@@ -33,6 +33,9 @@ npm install -D supertest @types/supertest
 
 # Linting
 npm install -D eslint-plugin-import
+
+# Path alias (rewrites src/ imports in compiled JS)
+npm install -D tsc-alias
 ```
 
 ## Step 3: Initialize Prisma
@@ -82,6 +85,31 @@ model User {
 }
 ```
 
+## Step 3b: Configure Path Alias
+
+Add `paths` to `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "src/*": ["src/*"]
+    }
+  }
+}
+```
+
+Update `package.json` build script so `tsc-alias` rewrites `src/` paths in compiled JS:
+
+```json
+{
+  "scripts": {
+    "build": "nest build && tsc-alias"
+  }
+}
+```
+
 ## Step 4: Docker Compose
 
 Create `docker-compose.yml` — see `14-docker-cicd-config.md` for the full file.
@@ -103,7 +131,7 @@ npx prisma migrate dev --name init
 Create these files:
 
 ```
-src/common/
+src/modules/common/
   common.module.ts
   prisma/
     prisma.module.ts
@@ -182,7 +210,7 @@ See `04-prisma-patterns.md` for full implementation.
 Create:
 
 ```
-src/auth/
+src/modules/auth/
   auth.module.ts
   auth.controller.ts
   auth.service.ts
@@ -213,8 +241,8 @@ import { NestFactory, Reflector } from '@nestjs/core';
 import { ClassSerializerInterceptor, Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import { AppModule } from './app.module';
-import { LoggingExceptionFilter } from './common/filters/exception.filter';
+import { AppModule } from 'src/modules/app.module';
+import { LoggingExceptionFilter } from 'src/modules/common/filters/exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

@@ -40,11 +40,11 @@ Register in `AppModule` imports. Because it is `@Global()`, all modules can inje
 ## Repository Pattern
 
 ```typescript
-// src/domains/work-order/work-order.repository.ts
+// src/modules/work-order/work-order.repository.ts
 import { Injectable } from '@nestjs/common';
 import { Prisma, WorkOrder } from '@prisma/client';
 
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 @Injectable()
 export class WorkOrderRepository {

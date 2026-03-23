@@ -3,7 +3,7 @@
 ## HttpModule Setup
 
 ```typescript
-// src/domains/weather/weather.module.ts
+// src/modules/weather/weather.module.ts
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -36,7 +36,7 @@ export class WeatherModule {}
 ## Service Wrapper
 
 ```typescript
-// src/domains/weather/weather.service.ts
+// src/modules/weather/weather.service.ts
 import {
   Injectable,
   InternalServerErrorException,

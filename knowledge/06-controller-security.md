@@ -3,7 +3,7 @@
 ## Full CRUD Controller
 
 ```typescript
-// src/domains/work-order/work-order.controller.ts
+// src/modules/work-order/work-order.controller.ts
 import {
   Body,
   Controller,
@@ -29,10 +29,10 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { User } from 'src/auth/decorators/user.decorator';
-import { Role } from 'src/auth/enums/role.enum';
-import { JwtPayload } from 'src/auth/interfaces/jwt-payload.interface';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { User } from 'src/modules/auth/decorators/user.decorator';
+import { Role } from 'src/modules/auth/enums/role.enum';
+import { JwtPayload } from 'src/modules/auth/interfaces/jwt-payload.interface';
 
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { QueryWorkOrderDto } from './dto/query-work-order.dto';
@@ -336,7 +336,7 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';

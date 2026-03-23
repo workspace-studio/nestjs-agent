@@ -97,13 +97,15 @@ import { ConfigService } from '@nestjs/config';
 // 2. Third-party imports
 import { plainToInstance } from 'class-transformer';
 
-// 3. Absolute imports from src/
-import { PrismaService } from 'src/common/prisma/prisma.service';
+// 3. Cross-module imports via src/ path alias
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
-// 4. Relative imports
+// 4. Within-module relative imports
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { WorkOrderRepository } from './work-order.repository';
 ```
+
+**Rule**: Cross-module imports always use `src/` path alias. Within-module imports use `./`. Never use `../` to cross module boundaries.
 
 ## Dependency Injection
 
@@ -130,8 +132,8 @@ export class WorkOrderService {
 Use `import type` for interfaces and type-only imports that are not used at runtime:
 
 ```typescript
-import type { JwtPayload } from '../interfaces/jwt-payload.interface';
-import type { PaginatedResult } from 'src/common/utils/pagination';
+import type { JwtPayload } from './interfaces/jwt-payload.interface';
+import type { PaginatedResult } from 'src/modules/common/utils/pagination';
 ```
 
 ## File Suffixes

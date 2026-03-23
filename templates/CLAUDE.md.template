@@ -67,6 +67,8 @@ PostgreSQL. Prisma ORM with adapter-pg pattern. Migrations in `prisma/migrations
 ## Code Style
 
 - ESLint + Prettier enforced
+- Cross-module imports use `src/` path alias: `import { X } from 'src/modules/auth/...'`
+- Within-module imports use relative `./`: `import { Y } from './dto/...'`
 - Use `import type` for type-only imports
 - Always `readonly` for injected dependencies
 - No default exports — always named exports

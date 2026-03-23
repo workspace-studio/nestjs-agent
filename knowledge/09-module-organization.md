@@ -15,7 +15,7 @@ export class WorkOrderModule {}
 ## Standard Domain Module
 
 ```typescript
-// src/domains/work-order/work-order.module.ts
+// src/modules/work-order/work-order.module.ts
 import { Module } from '@nestjs/common';
 
 import { WorkOrderController } from './work-order.controller';
@@ -176,14 +176,14 @@ export class CommonModule {}
 ## App Module (Root)
 
 ```typescript
-// src/app.module.ts
+// src/modules/app.module.ts
 import { Module } from '@nestjs/common';
 
 import { AuthModule } from './auth/auth.module';
 import { CommonModule } from './common/common.module';
-import { LocationModule } from './domains/location/location.module';
-import { UserModule } from './domains/user/user.module';
-import { WorkOrderModule } from './domains/work-order/work-order.module';
+import { LocationModule } from './location/location.module';
+import { UserModule } from './user/user.module';
+import { WorkOrderModule } from './work-order/work-order.module';
 
 @Module({
   imports: [
@@ -201,26 +201,26 @@ export class AppModule {}
 
 ```
 src/
-  app.module.ts
   main.ts
-  auth/
-    auth.module.ts
-    auth.controller.ts
-    auth.service.ts
-    decorators/
-    guards/
-    strategies/
-    interfaces/
-    enums/
-    dto/
-  common/
-    common.module.ts
-    prisma/
-    filters/
-    interceptors/
-    middleware/
-    utils/
-  domains/
+  modules/
+    app.module.ts
+    auth/
+      auth.module.ts
+      auth.controller.ts
+      auth.service.ts
+      decorators/
+      guards/
+      strategies/
+      interfaces/
+      enums/
+      dto/
+    common/
+      common.module.ts
+      prisma/
+      filters/
+      interceptors/
+      middleware/
+      utils/
     user/
       user.module.ts
       user.controller.ts
@@ -279,8 +279,8 @@ export class TasksService {
 import { Controller, Post } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/auth/enums/role.enum';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { Role } from 'src/modules/auth/enums/role.enum';
 
 @ApiExcludeController()
 @Controller('tasks')

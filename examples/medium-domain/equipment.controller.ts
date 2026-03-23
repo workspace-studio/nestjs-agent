@@ -14,9 +14,9 @@ import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { EquipmentService } from './equipment.service';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { User } from '../../common/decorators/user.decorator';
-import { Role } from '../../common/enums/role.enum';
+import { Roles } from 'src/modules/common/decorators/roles.decorator';
+import { User } from 'src/modules/common/decorators/user.decorator';
+import { Role } from 'src/modules/common/enums/role.enum';
 import { EquipmentStatus } from './dto/create-equipment.dto';
 
 @ApiTags('Equipment')

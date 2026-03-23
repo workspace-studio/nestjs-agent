@@ -49,7 +49,7 @@ npx prisma migrate dev --name add_equipment_table
 ## Step 3: Folder Structure
 
 ```
-src/domains/equipment/
+src/modules/equipment/
   dto/
     create-equipment.dto.ts
     update-equipment.dto.ts
@@ -73,7 +73,7 @@ src/domains/equipment/
 ### CreateEquipmentDto
 
 ```typescript
-// src/domains/equipment/dto/create-equipment.dto.ts
+// src/modules/equipment/dto/create-equipment.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
@@ -123,7 +123,7 @@ export class CreateEquipmentDto {
 ### UpdateEquipmentDto
 
 ```typescript
-// src/domains/equipment/dto/update-equipment.dto.ts
+// src/modules/equipment/dto/update-equipment.dto.ts
 import { PartialType } from '@nestjs/swagger';
 
 import { CreateEquipmentDto } from './create-equipment.dto';
@@ -134,7 +134,7 @@ export class UpdateEquipmentDto extends PartialType(CreateEquipmentDto) {}
 ### QueryEquipmentDto
 
 ```typescript
-// src/domains/equipment/dto/query-equipment.dto.ts
+// src/modules/equipment/dto/query-equipment.dto.ts
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -186,7 +186,7 @@ export class QueryEquipmentDto {
 ### EquipmentResponseDto
 
 ```typescript
-// src/domains/equipment/dto/equipment-response.dto.ts
+// src/modules/equipment/dto/equipment-response.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EquipmentStatus } from '@prisma/client';
 
@@ -226,11 +226,11 @@ export class EquipmentResponseDto {
 ## Step 5: Repository
 
 ```typescript
-// src/domains/equipment/equipment.repository.ts
+// src/modules/equipment/equipment.repository.ts
 import { ConflictException, Injectable } from '@nestjs/common';
 import { Equipment, Prisma } from '@prisma/client';
 
-import { PrismaService } from 'src/common/prisma/prisma.service';
+import { PrismaService } from 'src/modules/common/prisma/prisma.service';
 
 @Injectable()
 export class EquipmentRepository {
@@ -328,7 +328,7 @@ export class EquipmentRepository {
 ## Step 6: Service
 
 ```typescript
-// src/domains/equipment/equipment.service.ts
+// src/modules/equipment/equipment.service.ts
 import {
   ConflictException,
   Injectable,
@@ -451,7 +451,7 @@ export class EquipmentService {
 ## Step 7: Controller
 
 ```typescript
-// src/domains/equipment/equipment.controller.ts
+// src/modules/equipment/equipment.controller.ts
 import {
   Body,
   Controller,
@@ -476,8 +476,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Role } from 'src/auth/enums/role.enum';
+import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { Role } from 'src/modules/auth/enums/role.enum';
 
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { EquipmentResponseDto } from './dto/equipment-response.dto';
@@ -542,7 +542,7 @@ export class EquipmentController {
 ## Step 8: Module
 
 ```typescript
-// src/domains/equipment/equipment.module.ts
+// src/modules/equipment/equipment.module.ts
 import { Module } from '@nestjs/common';
 
 import { EquipmentController } from './equipment.controller';
