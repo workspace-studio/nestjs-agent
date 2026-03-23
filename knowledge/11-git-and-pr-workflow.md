@@ -20,29 +20,20 @@ git checkout -b chore/upgrade-nestjs-11
 git checkout -b refactor/extract-pagination-util
 ```
 
-## Conventional Commits
+## Commit Message Format
 
-Format: `<type>: <description>`
+Format: `#<issue_or_pr_number>: <description>`
 
-| Type       | When                                           |
-|------------|------------------------------------------------|
-| `feat:`    | New feature or endpoint                        |
-| `fix:`     | Bug fix                                        |
-| `chore:`   | Dependencies, config, build                    |
-| `docs:`    | Documentation changes                          |
-| `test:`    | Adding or fixing tests                         |
-| `refactor:`| Code restructuring without behavior change     |
-| `style:`   | Formatting, lint fixes                         |
-| `perf:`    | Performance improvement                        |
+Every commit message MUST start with the issue or PR number prefix. Do NOT use conventional commit prefixes (`feat:`, `fix:`, etc.) — use `#<number>:` instead.
 
 Examples:
 
 ```bash
-git commit -m "feat: add equipment domain with CRUD operations
+git commit -m "#11: Add equipment domain with CRUD operations
 
 Co-Authored-By: NestJS Agent <noreply@anthropic.com>"
 
-git commit -m "fix: validate due date is in the future for work orders
+git commit -m "#11: Fix address Copilot review findings in reservations + auth
 
 Co-Authored-By: NestJS Agent <noreply@anthropic.com>"
 ```
@@ -51,7 +42,7 @@ Multi-line commit for complex changes:
 
 ```bash
 git commit -m "$(cat <<'EOF'
-feat: add equipment domain with CRUD operations
+#11: Add equipment domain with CRUD operations
 
 - Add Prisma model and migration
 - Add repository, service, controller
@@ -142,7 +133,7 @@ If a pre-commit hook (lint, format) modifies files:
 git add .
 
 # Create a NEW commit (never amend unless explicitly asked)
-git commit -m "style: apply lint fixes"
+git commit -m "#<number>: Apply lint fixes"
 ```
 
 ## Commit Scope
