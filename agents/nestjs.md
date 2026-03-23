@@ -43,6 +43,16 @@ NEVER skip this step. Reading existing code prevents pattern violations.
 
 - **test-writer** — Writes comprehensive unit + e2e tests in isolated context. Use when testing is the primary task.
 - **code-reviewer** — Reviews code for quality, security, pattern compliance. Read-only, does not modify code.
+- **debugger** — Diagnoses runtime errors, failed tests, and Prisma query issues. Use when something is broken.
+- **security-auditor** — Audits code for OWASP vulnerabilities, secrets, auth issues. Read-only.
+
+### Available Commands
+
+| Command | Usage |
+|---------|-------|
+| `/deploy` | Pre-flight checks + deploy to production |
+| `/pr-review` | Review current branch changes before PR |
+| `/build-fix` | Automatically fix build and lint errors |
 
 ---
 
@@ -180,28 +190,48 @@ If CLAUDE.md does not exist, use `/bootstrap` skill or create from `@templates/C
 
 ## Knowledge References
 
-Read the relevant file before performing a task:
+**READ ONLY what your task needs** — do NOT read all files. Pick the group that matches your task:
 
-| File | When to Read |
-|------|-------------|
-| `@knowledge/01-code-style.md` | Always (first time) |
-| `@knowledge/02-swagger-openapi.md` | Adding/modifying endpoints |
-| `@knowledge/03-prisma-migrations.md` | Database changes |
-| `@knowledge/04-prisma-patterns.md` | Data access layer |
-| `@knowledge/05-service-patterns.md` | Service layer |
-| `@knowledge/06-controller-security.md` | HTTP layer, auth |
-| `@knowledge/07-error-handling.md` | Error handling |
-| `@knowledge/08-external-api-integration.md` | Third-party APIs |
-| `@knowledge/09-module-organization.md` | Module structure |
-| `@knowledge/10-domain-scaffold.md` | New module (detailed guide) |
-| `@knowledge/11-git-and-pr-workflow.md` | Git operations |
-| `@knowledge/12-media-and-s3.md` | File handling |
-| `@knowledge/13-email-and-notifications.md` | Email/notifications |
-| `@knowledge/14-docker-cicd-config.md` | Infrastructure |
-| `@knowledge/15-dependency-management.md` | Dependencies |
-| `@knowledge/16-interceptors-middleware.md` | Middleware layer |
-| `@knowledge/17-project-bootstrap.md` | New project from zero |
-| `@knowledge/18-testing-patterns.md` | Testing (CRITICAL) |
+### Scaffolding a new module
+`@knowledge/01-code-style.md` + `@knowledge/10-domain-scaffold.md` + `@knowledge/09-module-organization.md`
+
+### Editing controllers or endpoints
+`@knowledge/02-swagger-openapi.md` + `@knowledge/07-error-handling.md`
+
+### Editing services (business logic)
+`@knowledge/07-error-handling.md`
+
+### Database changes (schema, migrations, repositories)
+`@knowledge/03-prisma-migrations.md` + `@knowledge/04-prisma-patterns.md`
+
+### Writing or fixing tests
+`@knowledge/18-testing-patterns.md`
+
+### File uploads, S3, media
+`@knowledge/12-media-and-s3.md`
+
+### Email, notifications
+`@knowledge/13-email-and-notifications.md`
+
+### Third-party API integration
+`@knowledge/08-external-api-integration.md`
+
+### Infrastructure, Docker, CI/CD
+`@knowledge/14-docker-cicd-config.md`
+
+### New project from zero
+`@knowledge/17-project-bootstrap.md` + `@knowledge/01-code-style.md`
+
+### Git, PRs, branches
+`@knowledge/11-git-and-pr-workflow.md`
+
+### Middleware, interceptors, pipes
+`@knowledge/16-interceptors-middleware.md`
+
+### Dependency management
+`@knowledge/15-dependency-management.md`
+
+**NOTE:** Controller, service, repository, prisma, and testing rules are automatically enforced via `rules/` — you do NOT need to re-read those knowledge files for basic edits. Read them only when scaffolding a new module or need full code examples.
 
 ## Example References
 
