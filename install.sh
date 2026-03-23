@@ -24,7 +24,7 @@ if [ ! -f "package.json" ] && [ ! -f "nest-cli.json" ]; then
 fi
 
 # --- Create directory structure ---
-mkdir -p .claude/{agents,knowledge,examples}
+mkdir -p .claude/{agents,knowledge,examples,rules,commands,hooks}
 for skill in scaffold bootstrap fix-issue add-field write-tests create-pr refactor; do
     mkdir -p ".claude/skills/$skill"
 done
@@ -42,26 +42,63 @@ done
 cp "$SOURCE_DIR/knowledge/"*.md .claude/knowledge/
 cp -r "$SOURCE_DIR/examples/"* .claude/examples/ 2>/dev/null || true
 
+# --- Copy rules ---
+if [ -d "$SOURCE_DIR/rules" ]; then
+    cp "$SOURCE_DIR/rules/"*.md .claude/rules/
+fi
+
+# --- Copy commands ---
+if [ -d "$SOURCE_DIR/commands" ]; then
+    cp "$SOURCE_DIR/commands/"*.md .claude/commands/
+fi
+
+# --- Copy hooks ---
+if [ -d "$SOURCE_DIR/hooks" ]; then
+    cp "$SOURCE_DIR/hooks/"*.sh .claude/hooks/
+    chmod +x .claude/hooks/*.sh
+fi
+
 # --- Install settings.json with hooks (only if not exists) ---
 if [ ! -f ".claude/settings.json" ]; then
     cat > .claude/settings.json << 'SETTINGS_EOF'
 {
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run test *)",
+      "Bash(npm run build)",
+      "Bash(npm run start:dev)",
+      "Bash(npx prisma *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git status)",
+      "Bash(gh issue *)",
+      "Bash(gh pr *)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(secrets/**)",
+      "Bash(rm -rf *)",
+      "Bash(git push --force *)"
+    ]
+  },
   "hooks": {
-    "PostToolUse": [
+    "PreToolUse": [
       {
-        "matcher": { "tool": "Edit" },
+        "matcher": "Bash",
         "hooks": [{
           "type": "command",
-          "command": "npx eslint --fix $FILEPATH 2>/dev/null || true"
+          "command": ".claude/hooks/pre-commit.sh"
         }]
       }
     ],
-    "PreToolUse": [
+    "PostToolUse": [
       {
-        "matcher": { "tool": "Bash", "command": "git commit" },
+        "matcher": "Edit|Write",
         "hooks": [{
           "type": "command",
-          "command": "npm run build --quiet && npm run lint --quiet && npm run test --quiet"
+          "command": ".claude/hooks/lint-on-save.sh"
         }]
       }
     ]
@@ -87,11 +124,15 @@ echo "=== NestJS Agent Installed ==="
 echo "  Agents:    $(ls .claude/agents/*.md 2>/dev/null | wc -l | tr -d ' ') files"
 echo "  Skills:    $(find .claude/skills -name 'SKILL.md' 2>/dev/null | wc -l | tr -d ' ') skills"
 echo "  Knowledge: $(ls .claude/knowledge/*.md 2>/dev/null | wc -l | tr -d ' ') files"
+echo "  Rules:     $(ls .claude/rules/*.md 2>/dev/null | wc -l | tr -d ' ') files"
+echo "  Commands:  $(ls .claude/commands/*.md 2>/dev/null | wc -l | tr -d ' ') files"
+echo "  Hooks:     $(ls .claude/hooks/*.sh 2>/dev/null | wc -l | tr -d ' ') scripts"
 echo "  Examples:  $(find .claude/examples -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l | tr -d ' ') directories"
-echo "  Hooks:     $([ -f .claude/settings.json ] && echo 'yes' || echo 'no')"
+echo "  Settings:  $([ -f .claude/settings.json ] && echo 'yes (permissions + hooks)' || echo 'no')"
 echo "  CLAUDE.md:           $([ -f CLAUDE.md ] && echo 'present' || echo 'skipped')"
 echo "  FOLDER-STRUCTURE.md: $([ -f FOLDER-STRUCTURE.md ] && echo 'present' || echo 'skipped')"
 echo ""
-echo "  Skills:  /scaffold  /bootstrap  /fix-issue  /add-field  /write-tests  /create-pr  /refactor"
+echo "  Skills:   /scaffold  /bootstrap  /fix-issue  /add-field  /write-tests  /create-pr  /refactor"
+echo "  Commands: /deploy  /pr-review  /build-fix"
 echo ""
 echo "  Usage: cd $(pwd) && claude"
