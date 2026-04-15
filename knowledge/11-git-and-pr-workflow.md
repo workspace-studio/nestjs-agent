@@ -137,3 +137,18 @@ git commit -m "#<number>: Apply lint fixes"
 - Do not mix feature code with unrelated refactors
 - Migrations get their own commit if large
 - Test additions can be in the same commit as the feature
+
+### Split Signals — stop and split the commit if any of these apply
+
+- The commit message needs **"and"** or a comma between different subjects (e.g. "redesign court-closures **and** add reservations search") → split
+- The commit touches two unrelated domain modules → split (unless one genuinely depends on the other)
+- The commit mixes a schema/migration change with an unrelated feature → split
+- The commit mixes a search/filter addition with a schema redesign → split
+- The commit mixes a rename/cleanup with a behavior change → split
+- The commit bundles ≥3 distinct features "while we're at it" → split
+
+**One-line rule:** if you catch yourself writing **"also"** or **"additionally"** in the commit message body, stop and split.
+
+### Incomplete commits are also scope violations
+
+A commit must be internally complete. "Block users" that does not cancel their future reservations is not a smaller commit — it is a broken commit that will be retroactively fixed by the next one. If the Feature Design Pass (see `agents/nestjs.md`) lists N behaviors, all N ship together, or none of them do.

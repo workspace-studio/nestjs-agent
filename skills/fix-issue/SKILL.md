@@ -30,11 +30,20 @@ Parse the issue title, description, labels, and any comments for context.
 
 ### Step 3: Plan the Fix
 
-Before coding, outline:
+**Pure bugfix** — outline:
 - Root cause of the issue
 - Files that need to change
-- Any new tests needed
+- Regression test that would have caught this
 - Any migration needed
+
+**Feature request / enhancement / refactor** — run the **Feature Design Pass** from [agents/nestjs.md](../../agents/nestjs.md) before any code:
+- Terminology (enum values, field names — commit to naming ONCE)
+- Full list of behaviors / side effects (all ship in one commit, no partial states)
+- Orthogonal operations that must coexist
+- Migrations (name them correctly the first time — no rename migrations to fix earlier commits)
+- Out of scope (things you will NOT bundle into this fix)
+
+If the design reveals the issue really needs N commits, plan N commits — but each must be internally complete.
 
 ### Step 4: Implement
 
