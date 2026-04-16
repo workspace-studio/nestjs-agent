@@ -243,3 +243,50 @@ Create the bucket on first run:
 docker exec minio mc alias set local http://localhost:9000 minioadmin minioadmin
 docker exec minio mc mb local/my-app-dev
 ```
+
+## File Downloads with StreamableFile
+
+For serving files back to clients, use `StreamableFile` instead of raw streams:
+
+```typescript
+import { Controller, Get, Param, StreamableFile, Res } from '@nestjs/common';
+import type { Response } from 'express';
+
+@Get(':id/download')
+@ApiOperation({ summary: 'Download file' })
+async download(
+  @Param('id') id: string,
+  @Res({ passthrough: true }) res: Response,
+): Promise<StreamableFile> {
+  const file = await this.mediaService.getFileStream(id);
+
+  res.set({
+    'Content-Type': file.mimeType,
+    'Content-Disposition': `attachment; filename="${file.originalName}"`,
+  });
+
+  return new StreamableFile(file.stream);
+}
+```
+
+`StreamableFile` preserves interceptor chain (unlike `res.pipe()` which bypasses it).
+
+## Advanced File Validation with ParseFilePipe
+
+```typescript
+@Post('upload')
+@UseInterceptors(FileInterceptor('file'))
+upload(
+  @UploadedFile(
+    new ParseFilePipeBuilder()
+      .addFileTypeValidator({ fileType: /(jpg|jpeg|png|gif|webp)$/ })
+      .addMaxSizeValidator({ maxSize: 5 * 1024 * 1024 }) // 5MB
+      .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY }),
+  )
+  file: Express.Multer.File,
+) {
+  return this.mediaService.upload(file);
+}
+```
+
+`FileTypeValidator` checks magic bytes (not just extension) — prevents `.jpg` files that are actually executables.

@@ -223,3 +223,37 @@ export class WebhookController {
 })
 export class ExternalApiModule {}
 ```
+
+## Modern Pattern: firstValueFrom (NOT .toPromise())
+
+HttpService returns Observables. Convert to Promises with `firstValueFrom`:
+
+```typescript
+import { firstValueFrom, catchError } from 'rxjs';
+import { AxiosError } from 'axios';
+
+@Injectable()
+export class WeatherService {
+  private readonly logger = new Logger(WeatherService.name);
+
+  constructor(private readonly httpService: HttpService) {}
+
+  async getCurrentWeather(city: string): Promise<WeatherResponse> {
+    const { data } = await firstValueFrom(
+      this.httpService.get<WeatherResponse>(`/weather?q=${city}`).pipe(
+        catchError((error: AxiosError) => {
+          this.logger.error(`Weather API error: ${error.response?.status} ${error.message}`);
+          throw new BadRequestException(`Weather API error: ${error.message}`);
+        }),
+      ),
+    );
+    return data;
+  }
+}
+```
+
+**Do NOT use `.toPromise()` — it's deprecated in RxJS 8.**
+
+## Webhook Receiver with Signature Verification
+
+For receiving webhooks from external services (Stripe, GitHub, etc.), see `@knowledge/27-security-hardening.md` for raw body parsing and HMAC verification.

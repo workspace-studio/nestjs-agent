@@ -6,7 +6,7 @@ Claude Code agent configuration for NestJS + Prisma + PostgreSQL backend project
 
 - `agents/` — subagent definitions (code-reviewer, test-writer, debugger, security-auditor, db-specialist)
 - `skills/` — slash-command workflows (/scaffold, /fix-issue, /add-endpoint, /test-endpoint, /review-migration, etc.)
-- `knowledge/` — domain knowledge files (01-25, loaded on demand by agent)
+- `knowledge/` — domain knowledge files (01-30, loaded on demand by agent)
 - `rules/` — auto-loaded guardrails scoped by file pattern
 - `commands/` — one-word automations (/deploy, /pr-review, /build-fix)
 - `hooks/` — shell scripts wired via settings.json (pre-commit, lint-on-save)

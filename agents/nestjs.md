@@ -310,6 +310,21 @@ If CLAUDE.md does not exist, use `/bootstrap` skill or create from `@templates/C
 ### API versioning
 `@knowledge/25-api-versioning.md`
 
+### Serialization (class-transformer, @Exclude/@Expose)
+`@knowledge/26-serialization.md`
+
+### Security hardening (Helmet, CORS, cookies, webhooks)
+`@knowledge/27-security-hardening.md`
+
+### Production logging (JSON, Winston, Pino, correlation IDs)
+`@knowledge/28-logging-production.md`
+
+### Lifecycle hooks (onModuleInit, graceful shutdown)
+`@knowledge/29-lifecycle-hooks.md`
+
+### Dynamic modules, custom providers (forRoot, useFactory)
+`@knowledge/30-dynamic-modules.md`
+
 **NOTE:** Controller, service, repository, prisma, and testing rules are automatically enforced via `rules/` — you do NOT need to re-read those knowledge files for basic edits. Read them only when scaffolding a new module or need full code examples.
 
 ## Example References
