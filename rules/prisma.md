@@ -28,6 +28,16 @@ paths:
 - Cascade delete: `onDelete: Cascade` only for owned child entities (e.g., Tasks under WorkOrder)
 - Optional relations: use `?` on both the FK field and relation field
 
+## Before Changing Fields
+
+When renaming, removing, or changing the type of a model field, grep for ALL references before touching code:
+
+```bash
+grep -r "oldFieldName" src/ test/ --include="*.ts" -l
+```
+
+This catches references in repositories, services, controllers, DTOs, tests, and raw SQL. Schema changes ripple across layers — a field rename in `schema.prisma` will break any file that references the old name, including test assertions and `orderBy` objects.
+
 ## Migration Naming
 Use descriptive snake_case: `npx prisma migrate dev --name add_status_to_work_order`
 

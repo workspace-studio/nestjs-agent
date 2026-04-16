@@ -49,6 +49,16 @@ Every public method MUST have:
 - Test all HTTP methods with expected status codes (201, 200, 204, 400, 401, 403, 404, 409)
 - Use `supertest` for HTTP requests
 
+## When Schema Changes Break Tests
+
+Changing `orderBy` format (e.g., from `{ field: dir }` to `[{ field: dir }]`) or renaming fields will silently break test assertions. After any schema or repository change:
+
+```bash
+grep -r "orderBy" src/**/*.spec.ts test/ -l    # find affected test files
+```
+
+Update all assertions that match on exact `orderBy` shape, mock data field names, or response body fields. Prisma's `orderBy` accepts both object and array — use array consistently when relation-based sorts are involved.
+
 ## Forbidden Practices
 - NO `xit`, `xdescribe`, or `.skip` — fix or delete broken tests
 - NO real database in unit tests — only in e2e

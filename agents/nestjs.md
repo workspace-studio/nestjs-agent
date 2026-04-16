@@ -46,7 +46,9 @@ Produce a written design covering:
    All of these ship in ONE commit. A blocked user with active reservations is a broken intermediate state.
 3. **Orthogonal operations** — operations that look related but must remain separate. Example: `BLOCK` (reversible, cancel future, keep history) and `DELETE` (hard delete, cascade). Both coexist. State this explicitly so you do not accidentally remove DELETE when adding BLOCK.
 4. **Migrations** — list every migration needed. If the design reveals a naming change, fix it HERE, before you write the first migration. Shipping a rename migration to fix a previous commit's name is a failure.
-5. **Out of scope** — list things you are tempted to bundle but will NOT touch. Anything not in the feature's design goes to a separate commit, or a separate issue.
+5. **Batch & merge behavior** — if the API accepts multiple items (e.g., batch-create time slots), decide upfront whether adjacent/overlapping items should be merged before storage. Ask: "Would the admin expect to see N rows or fewer?" If fewer, build merging into the initial design — do not add it as a follow-up commit.
+6. **Ripple effects** — grep for all references to changed fields/models across the entire codebase before starting: `grep -r "oldFieldName" src/ test/ --include="*.ts" -l`. Schema changes break repositories, services, tests, raw SQL, and `orderBy` assertions.
+7. **Out of scope** — list things you are tempted to bundle but will NOT touch. Anything not in the feature's design goes to a separate commit, or a separate issue.
 
 **Splitting rule:** if the design naturally spans N commits, plan N commits — but each individual commit must be internally complete. "Blocking without cancellation" is not a valid intermediate commit.
 
