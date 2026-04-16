@@ -15,7 +15,7 @@ npm run test:e2e                  # E2E tests
 npm run lint                      # ESLint
 ```
 
-App: **http://localhost:3000** — Swagger: `/swagger-ui/index.html`
+App: **http://localhost:3000** — Swagger UI: `/swagger-ui/index.html` — Swagger JSON: `http://localhost:3001/swagger-ui-json`
 
 ## Key Patterns
 

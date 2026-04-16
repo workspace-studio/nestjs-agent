@@ -60,8 +60,6 @@ and a health endpoint.
 
 The agent will scaffold the entire project, install dependencies, configure everything, and verify it builds and passes tests.
 
-> **Important:** After bootstrap, the Swagger JSON spec is available at `http://localhost:3001/swagger-ui-json`. This is needed for frontend code generation, API client setup, and OpenAPI tooling integration.
-
 ### Option B: Manual Setup
 
 ```bash
@@ -400,8 +398,6 @@ The fastest way to explore and test your API:
 4. Expand any endpoint and click **Try it out**
 
 Swagger docs are auto-generated from decorators in your controllers. Every endpoint, DTO field, and response type is documented.
-
-**Swagger JSON spec:** Available at `http://localhost:3001/swagger-ui-json` — use this for frontend code generation, API client setup, or importing into Postman/Insomnia.
 
 ### cURL Examples
 

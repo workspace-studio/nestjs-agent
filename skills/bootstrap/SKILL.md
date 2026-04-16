@@ -154,7 +154,8 @@ See `@knowledge/06-controller-security.md` for all auth code.
 ```typescript
 // Global prefix, CORS, ValidationPipe (transform + whitelist + forbidNonWhitelisted)
 // NO enableImplicitConversion
-// Swagger at /swagger-ui with bearerAuth scheme
+// Swagger UI at /swagger-ui with bearerAuth scheme
+// Swagger JSON spec at /swagger-ui-json (port 3001 — used by frontend code generation)
 // See @knowledge/16-interceptors-middleware.md
 ```
 
