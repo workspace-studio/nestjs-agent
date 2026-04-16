@@ -71,6 +71,14 @@ npm run test:e2e
 
 Fix any failures and re-run until all green.
 
+## DO NOT
+
+- Do NOT fix the symptom without understanding the root cause — investigate first
+- Do NOT suppress errors to make tests pass — fix the underlying issue
+- Do NOT skip the regression test — every bug fix MUST include a test that would have caught the issue
+- Do NOT bundle unrelated fixes in the same commit — one logical change per commit
+- Do NOT use `--no-verify` to bypass the pre-commit hook
+
 ### Step 7: Create PR
 
 Use `/create-pr` skill or:

@@ -129,3 +129,14 @@ git checkout -b {issue_number}-add-{domain}-domain
 git add src/ prisma/ test/ CLAUDE.md FOLDER-STRUCTURE.md
 git commit -m "#{issue_number}: add {domain} domain with CRUD operations"
 ```
+
+## DO NOT
+
+- Do NOT skip any layer (controller, service, repository) — all three are mandatory
+- Do NOT inject PrismaService into services — only repositories access Prisma
+- Do NOT use `findUnique` for ID lookups that need entityStatus filter — use `findFirst`
+- Do NOT use numeric IDs — always String CUID (`@id @default(cuid())`)
+- Do NOT use `createdAt`/`updatedAt` — use `created`/`modified`
+- Do NOT use `deletedAt` for soft deletes — use `entityStatus: 'DELETED'`
+- Do NOT skip Swagger decorators — every endpoint needs `@ApiOperation` + `@ApiResponse`
+- Do NOT copy patterns from other modules without validating against `rules/` — existing code may have pre-existing violations

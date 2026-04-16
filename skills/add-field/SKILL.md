@@ -28,14 +28,14 @@ Add field to the model in `prisma/schema.prisma`:
 ```prisma
 model Court {
   // ... existing fields
-  newField  String?    // or appropriate type
-  // ... audit fields
+  capacity  Int?       // optional field
+  // ... audit fields (entityStatus, created, modified — always last)
 }
 ```
 
 Add index if the field will be filtered/sorted:
 ```prisma
-@@index([newField])
+@@index([capacity])
 ```
 
 ### Step 3: Create Migration
@@ -46,32 +46,44 @@ npx prisma migrate dev --name add_{field_name}_to_{model_name}
 
 ### Step 4: Update DTOs
 
-**CreateDto**: Add field with class-validator decorators and `@ApiProperty`:
+**CreateDto** — add with class-validator + `@ApiProperty`:
+
 ```typescript
-@ApiProperty({ description: '...', required: false })
+// OPTIONAL field
+@ApiProperty({ description: 'Court capacity', required: false, example: 4 })
 @IsOptional()
-@IsString()
-newField?: string;
+@IsInt()
+@Min(1)
+capacity?: number;
+
+// REQUIRED field
+@ApiProperty({ description: 'Court capacity', example: 4 })
+@IsInt()
+@IsNotEmpty()
+@Min(1)
+capacity: number;
 ```
 
-**UpdateDto**: Inherits automatically via `PartialType(CreateDto)`.
+**UpdateDto** — inherits automatically via `PartialType(CreateDto)`.
 
-**ResponseDto**: Add field with `@ApiProperty`.
+**ResponseDto** — add field with `@ApiProperty`:
 
-**ListResponseDto**: No change needed (entities carry the new field).
+```typescript
+@ApiProperty({ description: 'Court capacity', example: 4, nullable: true })
+capacity: number | null;
+```
 
 ### Step 5: Update Repository (if needed)
 
 - If field is **filterable**: add to `where` clause in `findAll()`
 - If field is **sortable**: add to `ALLOWED_SORT_FIELDS`
-- If field is **unique**: consider P2002 handling in `create()` and `update()`
+- If field is **unique**: add P2002 handling in `create()` and `update()`
 - If field is a **relation**: add `include` or `select` in queries
 
 ### Step 6: Update Service (if needed)
 
 - If field has **business rules**: add validation logic
-- If field is **unique**: add uniqueness check before create/update
-- If field needs **transformation**: add to `toResponseDto()` if applicable
+- If field is **unique**: add uniqueness check before create/update → `ConflictException`
 
 ### Step 7: Update Controller (if needed)
 
@@ -83,7 +95,7 @@ newField?: string;
 - Update mock objects to include the new field
 - Add test case for create with new field
 - Add test case for filtering/sorting if applicable
-- Update e2e tests
+- Update e2e tests with field in request/response
 
 ### Step 9: Validate
 
@@ -94,6 +106,16 @@ npm run test
 npm run test:e2e
 ```
 
+All must pass. The pre-commit hook will enforce this.
+
 ### Step 10: Update CLAUDE.md
 
 If the field changes the domain significantly, update the module description in CLAUDE.md.
+
+## DO NOT
+
+- Do NOT add a field without a migration — Prisma schema and DB must stay in sync
+- Do NOT add a required field without a default value to a table with existing data — the migration will fail
+- Do NOT skip `@ApiProperty` on the ResponseDto — Swagger must reflect the new field
+- Do NOT add filtering/sorting without adding the field to `ALLOWED_SORT_FIELDS`
+- Do NOT rename a field that was just added in a recent commit — get the name right in Feature Design Pass first

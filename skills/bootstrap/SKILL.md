@@ -187,3 +187,12 @@ npm run start:dev
 ### Step 12: First Domain Module
 
 If the user specified domain requirements, use `/scaffold` to create the first business module.
+
+## DO NOT
+
+- Do NOT skip Docker Compose setup — PostgreSQL must run in a container, not locally
+- Do NOT use `enableImplicitConversion` in ValidationPipe — it causes silent type coercion bugs
+- Do NOT use numeric auto-increment IDs — always String CUID
+- Do NOT skip CLAUDE.md creation — every project needs a project brain from day one
+- Do NOT install unnecessary dependencies "just in case" — only add what the project needs now
+- Do NOT copy `.env.example` with real credentials — use placeholder values

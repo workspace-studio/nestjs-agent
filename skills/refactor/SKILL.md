@@ -65,3 +65,12 @@ When multiple modules duplicate logic:
 4. **Execute** — one change at a time, test after each
 5. **Verify** — full test suite green
 6. **Update docs** — update CLAUDE.md if structure changed
+
+## DO NOT
+
+- Do NOT change behavior during a refactor — if tests break, the refactoring is wrong
+- Do NOT rename database columns without `@@map` — use Prisma mapping to avoid migrations
+- Do NOT split a module and leave broken imports — update ALL references before committing
+- Do NOT mix a refactor with a feature addition in the same commit
+- Do NOT remove test coverage — refactoring should preserve or increase coverage
+- Do NOT copy patterns from existing code without validating against `rules/` — existing code may have bugs
