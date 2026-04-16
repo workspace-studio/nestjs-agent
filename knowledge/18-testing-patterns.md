@@ -767,6 +767,43 @@ describe('Equipment (e2e)', () => {
 
       expect(response.body.entities.length).toBeGreaterThanOrEqual(1);
     });
+
+    it('should sort by name ASC', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/equipment?sortBy=name&sortDirection=ASC')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      const names = response.body.entities.map((e: any) => e.name);
+      expect(names).toEqual([...names].sort());
+    });
+
+    it('should sort by name DESC', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/api/equipment?sortBy=name&sortDirection=DESC')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      const names = response.body.entities.map((e: any) => e.name);
+      expect(names).toEqual([...names].sort().reverse());
+    });
+
+    it('should accept lowercase sortDirection', async () => {
+      await request(app.getHttpServer())
+        .get('/api/equipment?sortBy=name&sortDirection=asc')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+    });
+
+    it('should sort by relation field (e.g., courtName)', async () => {
+      // Only test if module supports relation sorting
+      const response = await request(app.getHttpServer())
+        .get('/api/reservations?sortBy=courtName&sortDirection=ASC')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.entities).toBeDefined();
+    });
   });
 
   describe('GET /api/equipment/:id', () => {

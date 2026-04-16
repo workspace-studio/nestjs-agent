@@ -35,6 +35,19 @@ paths:
 - `@Param('id') id: string` — path parameters
 - `@Query() query: QueryXxxDto` — pagination and filters
 
+## @Transform Safety
+`@Transform` decorators in DTOs MUST handle `undefined`/`null` — the transform runs before the default value is applied:
+
+```typescript
+// WRONG — crashes if sortDirection is not provided
+@Transform(({ value }) => value.toUpperCase())
+
+// CORRECT — guard against undefined
+@Transform(({ value }: { value: string | undefined }) =>
+  typeof value === 'string' ? value.toUpperCase() : value
+)
+```
+
 ## Import Order
 1. `@nestjs/common` imports
 2. `@nestjs/swagger` imports
