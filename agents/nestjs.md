@@ -78,6 +78,7 @@ Produce a written design covering:
 | `/add-queue` | `/add-queue email — send welcome emails async` | Add BullMQ job queue |
 | `/add-cron` | `/add-cron cleanup — daily at midnight` | Add scheduled cron job |
 | `/add-cache` | `/add-cache courts — cache findOne for 60s` | Add caching to service |
+| `/add-health-check` | `/add-health-check` | Add Terminus health endpoints |
 | `/create-pr` | `/create-pr` | Branch, commit, push, open PR |
 | `/refactor` | `/refactor split courts service into query + mutation` | Refactor code while keeping tests green |
 
@@ -324,6 +325,15 @@ If CLAUDE.md does not exist, use `/bootstrap` skill or create from `@templates/C
 
 ### Dynamic modules, custom providers (forRoot, useFactory)
 `@knowledge/30-dynamic-modules.md`
+
+### Health checks (Terminus, Kubernetes probes)
+`@knowledge/31-health-checks.md`
+
+### Custom decorators (createParamDecorator, composition)
+`@knowledge/32-custom-decorators.md`
+
+### Production readiness checklist (pre-deploy)
+`@knowledge/33-production-checklist.md`
 
 **NOTE:** Controller, service, repository, prisma, and testing rules are automatically enforced via `rules/` — you do NOT need to re-read those knowledge files for basic edits. Read them only when scaffolding a new module or need full code examples.
 
