@@ -25,7 +25,7 @@ fi
 
 # --- Create directory structure ---
 mkdir -p .claude/{agents,knowledge,examples,rules,commands,hooks}
-for skill in scaffold bootstrap fix-issue add-field write-tests create-pr refactor add-endpoint test-endpoint review-migration; do
+for skill in scaffold bootstrap fix-issue add-field write-tests create-pr refactor add-endpoint test-endpoint review-migration add-queue add-cron add-cache; do
     mkdir -p ".claude/skills/$skill"
 done
 

@@ -75,6 +75,9 @@ Produce a written design covering:
 | `/write-tests` | `/write-tests courts` | Generate tests for a module |
 | `/test-endpoint` | `/test-endpoint GET /api/courts/:id` | E2E tests for one endpoint |
 | `/review-migration` | `/review-migration` | Review migration for safety |
+| `/add-queue` | `/add-queue email — send welcome emails async` | Add BullMQ job queue |
+| `/add-cron` | `/add-cron cleanup — daily at midnight` | Add scheduled cron job |
+| `/add-cache` | `/add-cache courts — cache findOne for 60s` | Add caching to service |
 | `/create-pr` | `/create-pr` | Branch, commit, push, open PR |
 | `/refactor` | `/refactor split courts service into query + mutation` | Refactor code while keeping tests green |
 
@@ -285,6 +288,27 @@ If CLAUDE.md does not exist, use `/bootstrap` skill or create from `@templates/C
 
 ### Dependency management
 `@knowledge/15-dependency-management.md`
+
+### Caching (Redis, cache-manager)
+`@knowledge/19-caching.md`
+
+### Task scheduling, cron jobs
+`@knowledge/20-task-scheduling.md`
+
+### Job queues (BullMQ, async processing)
+`@knowledge/21-queues.md`
+
+### Events (EventEmitter, decoupled side effects)
+`@knowledge/22-events.md`
+
+### Rate limiting, throttling
+`@knowledge/23-rate-limiting.md`
+
+### OAuth (Google), 2FA (TOTP)
+`@knowledge/24-oauth-2fa.md`
+
+### API versioning
+`@knowledge/25-api-versioning.md`
 
 **NOTE:** Controller, service, repository, prisma, and testing rules are automatically enforced via `rules/` — you do NOT need to re-read those knowledge files for basic edits. Read them only when scaffolding a new module or need full code examples.
 
