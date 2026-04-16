@@ -28,11 +28,19 @@ if [ -n "$STAGED" ]; then
     fi
 fi
 
-# Step 3: Run test suite
-echo "Running tests..."
+# Step 3: Run unit test suite
+echo "Running unit tests..."
 npm test -- --silent
 if [ $? -ne 0 ]; then
-    echo -e "${RED}Tests failed. Commit blocked.${NC}"
+    echo -e "${RED}Unit tests failed. Commit blocked.${NC}"
+    exit 2
+fi
+
+# Step 4: Run e2e test suite
+echo "Running e2e tests..."
+npm run test:e2e -- --silent
+if [ $? -ne 0 ]; then
+    echo -e "${RED}E2E tests failed. Commit blocked.${NC}"
     exit 2
 fi
 

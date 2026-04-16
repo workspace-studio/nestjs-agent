@@ -25,7 +25,7 @@ fi
 
 # --- Create directory structure ---
 mkdir -p .claude/{agents,knowledge,examples,rules,commands,hooks}
-for skill in scaffold bootstrap fix-issue add-field write-tests create-pr refactor; do
+for skill in scaffold bootstrap fix-issue add-field write-tests create-pr refactor add-endpoint test-endpoint review-migration; do
     mkdir -p ".claude/skills/$skill"
 done
 
@@ -86,7 +86,7 @@ if [ ! -f ".claude/settings.json" ]; then
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash(git commit*)",
         "hooks": [{
           "type": "command",
           "command": ".claude/hooks/pre-commit.sh"
@@ -132,7 +132,7 @@ echo "  Settings:  $([ -f .claude/settings.json ] && echo 'yes (permissions + ho
 echo "  CLAUDE.md:           $([ -f CLAUDE.md ] && echo 'present' || echo 'skipped')"
 echo "  FOLDER-STRUCTURE.md: $([ -f FOLDER-STRUCTURE.md ] && echo 'present' || echo 'skipped')"
 echo ""
-echo "  Skills:   /scaffold  /bootstrap  /fix-issue  /add-field  /write-tests  /create-pr  /refactor"
+echo "  Skills:   /scaffold  /bootstrap  /fix-issue  /add-field  /add-endpoint  /write-tests  /test-endpoint  /review-migration  /create-pr  /refactor"
 echo "  Commands: /deploy  /pr-review  /build-fix"
 echo ""
 echo "  Usage: cd $(pwd) && claude"
