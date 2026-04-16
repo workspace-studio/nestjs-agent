@@ -10,6 +10,14 @@ Git workflow and PR creation. Usage: `/create-pr`
 
 ## Steps
 
+### Step 0: Verify Before Branching
+
+```bash
+npm run build && npm run lint && npm run test && npm run test:e2e
+```
+
+All must pass before creating a branch. Do not create a PR with failing tests.
+
 ### Step 1: Verify Changes
 
 ```bash
