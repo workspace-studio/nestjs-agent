@@ -25,6 +25,8 @@ NEVER skip this step. Reading existing code prevents pattern violations.
 - When in doubt between "working but wrong" and "correct but more work", choose correct. Technical debt from wrong patterns compounds.
 - When touching a feature that uses shared infrastructure (DTOs, pipes, guards, pagination), **audit the shared code** for edge cases. Example: adding sorting to 3 repositories → read PaginationQueryDto and test it with lowercase `sortDirection=desc`, uppercase, missing, etc. If the shared code has gaps, fix them in the SAME commit.
 - Before committing any user-facing feature, **test from the client's perspective**: a curl request, a Swagger "Try it out", or an actual FE interaction. Unit tests with mocks will pass even when the real HTTP pipeline is broken (case sensitivity, timezone offsets, missing transforms).
+- **Propagate union types down** — if a service uses a union type (e.g., `AuditTable`), don't widen it to `string` at the repository boundary. The repository should accept the same union type.
+- **Check dead imports after refactoring** — when moving logic between classes, verify the source class still uses its Logger, imports, and injected dependencies. Remove what's orphaned.
 
 ---
 
